@@ -396,6 +396,7 @@ export function firePlayerProjectile() {
     .applyQuaternion(turretPivot.getWorldQuaternion(new THREE.Quaternion()))
     .add(turretPivot.getWorldPosition(new THREE.Vector3()));
   createProjectile(true, position, direction);
+  audioManager.playShoot();
 }
 
 export function createExplosion(position, color, size) {

@@ -20,81 +20,108 @@ export class AudioManager {
   }
 
   playShoot() {
-    console.log("playShoot called, ctx.state:", this.ctx?.state); // Check console
-
     if (!this.ctx || this.isMuted) return;
     if (this.ctx.state === "suspended") this.ctx.resume();
 
-    const t = this.ctx.currentTime + 0.03; // Safer buffer
+    const t = this.ctx.currentTime + 0.02;
 
-    // Noise burst (sharper attack)
-    const noiseBufferSize = this.ctx.sampleRate * 0.08;
-    const noiseBuffer = this.ctx.createBuffer(
+    /* =========================
+     1. Sharp transient "P"
+  ========================= */
+    const crackSize = Math.floor(this.ctx.sampleRate * 0.03);
+    const crackBuffer = this.ctx.createBuffer(
       1,
-      noiseBufferSize,
+      crackSize,
       this.ctx.sampleRate
     );
-    const noiseData = noiseBuffer.getChannelData(0);
-    for (let i = 0; i < noiseBufferSize; i++) {
-      noiseData[i] = (Math.random() * 2 - 1) * 0.8;
+    const crackData = crackBuffer.getChannelData(0);
+
+    for (let i = 0; i < crackSize; i++) {
+      crackData[i] = Math.random() * 2 - 1;
     }
-    const noise = this.ctx.createBufferSource();
-    noise.buffer = noiseBuffer;
 
-    const noiseGain = this.ctx.createGain();
-    noiseGain.gain.setValueAtTime(0.4, t);
-    noiseGain.exponentialRampToValueAtTime(0.001, t + 0.08);
-    noiseGain.linearRampToValueAtTime(0, t + 0.1);
+    const crack = this.ctx.createBufferSource();
+    crack.buffer = crackBuffer;
 
-    // Lowpass for "zap"
-    const noiseFilter = this.ctx.createBiquadFilter();
-    noiseFilter.type = "lowpass";
-    noiseFilter.frequency.setValueAtTime(1500, t);
-    noiseFilter.frequency.exponentialRampToValueAtTime(200, t + 0.08);
+    const crackFilter = this.ctx.createBiquadFilter();
+    crackFilter.type = "highpass";
+    crackFilter.frequency.setValueAtTime(1800, t);
 
-    noise.connect(noiseFilter);
-    noiseFilter.connect(noiseGain);
-    noiseGain.connect(this.masterGain);
-    noise.start(t);
+    const crackGain = this.ctx.createGain();
+    crackGain.gain.setValueAtTime(0.5, t);
+    crackGain.gain.exponentialRampToValueAtTime(0.001, t + 0.04);
 
-    // Main pew tone (sawtooth + detune for laser vibe)
-    const osc = this.ctx.createOscillator();
-    osc.type = "sawtooth";
-    osc.frequency.setValueAtTime(1200, t); // Higher, punchier start
-    osc.frequency.exponentialRampToValueAtTime(180, t + 0.25);
-    osc.detune.setValueAtTime(0, t);
-    osc.detune.linearRampToValueAtTime(-20, t + 0.25); // Slight pitch drop
+    crack.connect(crackFilter);
+    crackFilter.connect(crackGain);
+    crackGain.connect(this.masterGain);
+    crack.start(t);
 
-    const gain = this.ctx.createGain();
-    gain.gain.setValueAtTime(0, t);
-    gain.gain.linearRampToValueAtTime(0.7, t + 0.02); // Fast attack
-    gain.gain.exponentialRampToValueAtTime(0.001, t + 0.25);
-    gain.linearRampToValueAtTime(0, t + 0.3); // Clean tail
+    /* =========================
+     2. Main low boom "UM"
+  ========================= */
+    const boomOsc = this.ctx.createOscillator();
+    boomOsc.type = "sine";
+    boomOsc.frequency.setValueAtTime(90, t);
+    boomOsc.frequency.exponentialRampToValueAtTime(38, t + 0.08);
 
-    // Filter sweep (key for "pew" feel)
-    const filter = this.ctx.createBiquadFilter();
-    filter.type = "lowpass";
-    filter.frequency.setValueAtTime(2000, t);
-    filter.frequency.exponentialRampToValueAtTime(300, t + 0.25);
-    filter.Q.setValueAtTime(1, t);
+    const boomLowpass = this.ctx.createBiquadFilter();
+    boomLowpass.type = "lowpass";
+    boomLowpass.frequency.value = 220;
 
-    osc.connect(filter);
-    filter.connect(gain);
-    gain.connect(this.masterGain);
+    const boomGain = this.ctx.createGain();
+    boomGain.gain.setValueAtTime(0.8, t);
+    boomGain.gain.exponentialRampToValueAtTime(0.001, t + 0.25);
 
-    osc.start(t);
-    osc.stop(t + 0.3);
+    boomOsc.connect(boomLowpass);
+    boomLowpass.connect(boomGain);
+    boomGain.connect(this.masterGain);
+    boomOsc.start(t);
+    boomOsc.stop(t + 0.3);
 
-    // Cleanup (prevents leaks on rapid fire)
-    setTimeout(() => {
-      osc.disconnect();
-      gain.disconnect();
-      filter.disconnect();
-      noise.disconnect();
-      noiseGain.disconnect();
-      noiseFilter.disconnect();
-    }, 350);
-    console.log("Pew scheduled at", t);
+    /* =========================
+     3. Sub punch (chest hit)
+  ========================= */
+    const subOsc = this.ctx.createOscillator();
+    subOsc.type = "sine";
+    subOsc.frequency.setValueAtTime(55, t);
+    subOsc.frequency.exponentialRampToValueAtTime(35, t + 0.12);
+
+    const subGain = this.ctx.createGain();
+    subGain.gain.setValueAtTime(0.9, t);
+    subGain.gain.exponentialRampToValueAtTime(0.001, t + 0.18);
+
+    subOsc.connect(subGain);
+    subGain.connect(this.masterGain);
+    subOsc.start(t);
+    subOsc.stop(t + 0.2);
+
+    /* =========================
+     4. Low-mid body thud
+  ========================= */
+    const bodySize = Math.floor(this.ctx.sampleRate * 0.12);
+    const bodyBuffer = this.ctx.createBuffer(1, bodySize, this.ctx.sampleRate);
+    const bodyData = bodyBuffer.getChannelData(0);
+
+    for (let i = 0; i < bodySize; i++) {
+      bodyData[i] = (Math.random() * 2 - 1) * 0.8;
+    }
+
+    const body = this.ctx.createBufferSource();
+    body.buffer = bodyBuffer;
+
+    const bodyFilter = this.ctx.createBiquadFilter();
+    bodyFilter.type = "lowpass";
+    bodyFilter.frequency.setValueAtTime(500, t);
+    bodyFilter.frequency.exponentialRampToValueAtTime(120, t + 0.15);
+
+    const bodyGain = this.ctx.createGain();
+    bodyGain.gain.setValueAtTime(0.4, t);
+    bodyGain.gain.exponentialRampToValueAtTime(0.001, t + 0.15);
+
+    body.connect(bodyFilter);
+    bodyFilter.connect(bodyGain);
+    bodyGain.connect(this.masterGain);
+    body.start(t);
   }
 
   playExplosion() {
