@@ -1,4 +1,4 @@
-# Tank Labyrinth Game
+# Toy Tank War
 
 A 3D tank battle game built with Three.js.
 
