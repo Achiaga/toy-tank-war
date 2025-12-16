@@ -8,13 +8,13 @@ export function createTank(color, x, y, z, scale = 1, type = "balanced") {
   // --- CHASSIS ---
   let bodyGeo;
   if (type === "heavy") {
-    // Heavy: Wider, bulkier
+    // Heavy: Wider and bulkier look
     bodyGeo = new THREE.BoxGeometry(1.8 * scale, 1.0 * scale, 3.2 * scale);
   } else if (type === "scout") {
-    // Scout: Sleeker
+    // Scout: Sleeker design
     bodyGeo = new THREE.BoxGeometry(1.2 * scale, 0.6 * scale, 2.8 * scale);
   } else {
-    // Balanced & Spanish
+    // Balanced & Spanish (standard)
     bodyGeo = new THREE.BoxGeometry(1.4 * scale, 0.8 * scale, 3 * scale);
   }
 
@@ -181,8 +181,11 @@ export function createTank(color, x, y, z, scale = 1, type = "balanced") {
   tank.position.set(x, y, z);
   tank.userData.turretPivot = turretPivot;
 
-  // Store dimensions for collision detection
-  // Adjust based on type if needed, but scale handles most of it
+  tank.position.set(x, y, z);
+  tank.userData.turretPivot = turretPivot;
+
+  // Keep track of size for collisions later
+  // We can adjust this based on type, but scale does most of the work
   let width = 2.2 * scale;
   if (type === "heavy") width = 2.8 * scale;
 

@@ -21,37 +21,43 @@ export class AudioManager {
 
   playShoot() {
     if (!this.ctx || this.isMuted) return;
+    if (this.ctx.state === "suspended") this.ctx.resume();
 
-    // Noise burst
-    const t = this.ctx.currentTime;
+    const t = this.ctx.currentTime + 0.01; // Small buffer to ensure scheduling is in future
+
+    // Noise burst (Chirp)
     const osc = this.ctx.createOscillator();
     const gain = this.ctx.createGain();
 
     osc.type = "square";
-    osc.frequency.setValueAtTime(150, t);
-    osc.frequency.exponentialRampToValueAtTime(0.01, t + 0.1);
+    osc.frequency.setValueAtTime(200, t);
+    osc.frequency.exponentialRampToValueAtTime(50, t + 0.15);
 
-    gain.gain.setValueAtTime(0.5, t);
-    gain.gain.exponentialRampToValueAtTime(0.01, t + 0.1);
+    gain.gain.setValueAtTime(0.3, t);
+    gain.gain.exponentialRampToValueAtTime(0.001, t + 0.15);
 
     osc.connect(gain);
     gain.connect(this.masterGain);
 
     osc.start(t);
-    osc.stop(t + 0.1);
+    osc.stop(t + 0.15);
 
-    // "Pew" part
+    // Main "Pew" Tone
     const osc2 = this.ctx.createOscillator();
     const gain2 = this.ctx.createGain();
-    osc2.type = "sawtooth";
-    osc2.frequency.setValueAtTime(800, t);
-    osc2.frequency.exponentialRampToValueAtTime(100, t + 0.15);
-    gain2.gain.setValueAtTime(0.3, t);
-    gain2.gain.exponentialRampToValueAtTime(0.01, t + 0.15);
+
+    osc2.type = "triangle"; // Smoother than sawtooth
+    osc2.frequency.setValueAtTime(600, t);
+    osc2.frequency.exponentialRampToValueAtTime(100, t + 0.2);
+
+    gain2.gain.setValueAtTime(0.5, t);
+    gain2.gain.exponentialRampToValueAtTime(0.001, t + 0.2);
+
     osc2.connect(gain2);
     gain2.connect(this.masterGain);
+
     osc2.start(t);
-    osc2.stop(t + 0.15);
+    osc2.stop(t + 0.2);
   }
 
   playExplosion() {
@@ -119,7 +125,7 @@ export class AudioManager {
 
   startMusic() {
     if (!this.ctx) return;
-    // Simple bass drone
+    // Just a simple bass drone for now
     const osc = this.ctx.createOscillator();
     osc.type = "triangle";
     osc.frequency.value = 55; // A1

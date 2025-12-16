@@ -33,7 +33,7 @@ const restartButton = document.getElementById("restart-button");
 const minimapElement = document.getElementById("minimap");
 const tankCards = document.querySelectorAll(".tank-card");
 
-// Initialize preview on load
+// Kick off the preview when the page loads
 window.addEventListener("load", () => {
   document.getElementById("start-screen").style.display = "flex";
   initPreview();
@@ -68,7 +68,7 @@ function initGame() {
     const colorInput = document.getElementById("tank-color");
     state.playerColor = colorInput.value;
 
-    // Load stats from selected tank type
+    // Grab stats from the selected tank type
     const config = state.tankConfigs[state.selectedTankType || "balanced"];
     state.stats = { ...config }; // Copy config to stats
     state.health = state.stats.maxHealth;
@@ -109,11 +109,23 @@ function restartGame() {
   state.enemyProjectiles = [];
   state.explosions = [];
   state.minimapMarkers = [];
+
+  // Reset keys just in case
   Object.keys(keys).forEach((key) => (keys[key] = false));
 
-  if (state.minimapRenderer)
+  // Clean up the old renderers so we don't get duplicates
+  if (
+    state.minimapRenderer &&
+    minimapElement.contains(state.minimapRenderer.domElement)
+  ) {
     minimapElement.removeChild(state.minimapRenderer.domElement);
-  state.scene.remove.apply(state.scene, state.scene.children);
+  }
+
+  if (state.renderer && document.body.contains(state.renderer.domElement)) {
+    document.body.removeChild(state.renderer.domElement);
+  }
+
+  // Start fresh!
   initGame();
 }
 
@@ -149,7 +161,7 @@ function animate() {
   const cameraDistance = 5;
   const cameraHeight = 2;
 
-  // Calculate camera position based on spherical coordinates
+  // Figure out where the camera should be based on spherical coords
   const cx =
     state.playerTank.position.x +
     cameraDistance *

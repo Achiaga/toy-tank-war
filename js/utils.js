@@ -34,7 +34,7 @@ export function raycastToTarget(origin, direction, distance, obstacles) {
   return intersects.length > 0 && intersects[0].distance < distance;
 }
 
-// SAT Collision Detection for Rotated Rectangle (Tank) vs Axis-Aligned Rectangle (Wall)
+// Using SAT (Separating Axis Theorem) to check collisions between our rotated tank and the walls
 export function checkTankCollision(tank, walls) {
   const tankPos = tank.position;
   const tankSize = tank.userData.size || { width: 2.2, length: 3.2 }; // Fallback
