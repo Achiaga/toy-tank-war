@@ -27,7 +27,9 @@ export function createTank(color, x, y, z, scale = 1, type = "balanced") {
   tank.add(body);
 
   // --- TREADS ---
-  const treadMaterial = new THREE.MeshStandardMaterial({ color: 0x333333 });
+  const treadMaterial = new THREE.MeshStandardMaterial({ color: 0x1a1a1a }); // Darker rubber color
+  const wheelMaterial = new THREE.MeshStandardMaterial({ color: 0x555555 }); // Grey wheels
+
   let treadWidth = 0.4 * scale;
   let treadHeight = 0.8 * scale;
   let treadLength = 3.2 * scale;
@@ -39,22 +41,124 @@ export function createTank(color, x, y, z, scale = 1, type = "balanced") {
     treadLength = 3.4 * scale;
     treadOffset = 1.1 * scale;
   } else if (type === "scout") {
-    // Wider wheels for scout
     treadWidth = 0.6 * scale;
-    treadOffset = 0.8 * scale; // Slightly closer to body since body is narrower
+    treadOffset = 0.8 * scale;
   }
 
-  const treadGeo = new THREE.BoxGeometry(treadWidth, treadHeight, treadLength);
-  const leftTread = new THREE.Mesh(treadGeo, treadMaterial);
+  // Helper to create a detailed track unit
+  const createTrackEngine = (width, height, length) => {
+    const group = new THREE.Group();
+    const wheelRadius = height * 0.4; // Slightly smaller than half height
+    const wheelCount = 4;
+    const wheelGeo = new THREE.CylinderGeometry(
+      wheelRadius,
+      wheelRadius,
+      width,
+      16
+    );
+    wheelGeo.rotateZ(Math.PI / 2); // Rotate to face sideways
+
+    // 1. Wheels
+    const spacing = (length - wheelRadius * 2) / (wheelCount - 1);
+    const startZ = -length / 2 + wheelRadius;
+
+    for (let i = 0; i < wheelCount; i++) {
+      const wheel = new THREE.Mesh(wheelGeo, wheelMaterial);
+      wheel.position.set(0, 0, startZ + i * spacing);
+      wheel.castShadow = true;
+      wheel.receiveShadow = true;
+      group.add(wheel);
+    }
+
+    // 2. Track Belt (Top and Bottom)
+    const beltThickness = 0.05 * scale;
+    const beltGeo = new THREE.BoxGeometry(width, beltThickness, length);
+
+    const topBelt = new THREE.Mesh(beltGeo, treadMaterial);
+    topBelt.position.y = wheelRadius;
+    topBelt.castShadow = true;
+    topBelt.receiveShadow = true;
+    group.add(topBelt);
+
+    const bottomBelt = new THREE.Mesh(beltGeo, treadMaterial);
+    bottomBelt.position.y = -wheelRadius;
+    bottomBelt.castShadow = true;
+    bottomBelt.receiveShadow = true;
+    group.add(bottomBelt);
+
+    // 3. Track Belt Ends (Curved)
+    const endGeo = new THREE.CylinderGeometry(
+      wheelRadius + beltThickness / 2,
+      wheelRadius + beltThickness / 2,
+      width,
+      16,
+      1,
+      true,
+      0,
+      Math.PI
+    );
+    endGeo.rotateZ(Math.PI / 2);
+
+    const frontCurve = new THREE.Mesh(endGeo, treadMaterial);
+    frontCurve.position.set(0, 0, length / 2 - wheelRadius);
+    // frontCurve needs to rotate to cover the front
+    // Cylinder default is upright. We rotated Z to lay it flat.
+    // Now we need to rotate X to make the half-circle face forward/up?
+    // Actually, let's just use a Box for ends for now to keep it simple and robust,
+    // or just let the wheels be the ends.
+    // A simple "Toy" look is just the top/bottom plates and the wheels.
+    // The wheels act as the "curve".
+
+    // Let's add a "Hubcap" detail to wheels?
+    // No, let's add a "Track Segment" texture look?
+    // Actually, let's add the curved ends, it looks much better.
+    // Cylinder segment: thetaLength = PI.
+
+    const frontEnd = new THREE.Mesh(
+      new THREE.CylinderGeometry(
+        wheelRadius,
+        wheelRadius,
+        width,
+        16,
+        1,
+        false,
+        0,
+        Math.PI
+      ),
+      treadMaterial
+    );
+    frontEnd.rotateZ(Math.PI / 2); // Lay flat
+    frontEnd.rotateX(-Math.PI / 2); // Curve faces forward
+    frontEnd.position.set(0, 0, length / 2 - wheelRadius);
+    group.add(frontEnd);
+
+    const backEnd = new THREE.Mesh(
+      new THREE.CylinderGeometry(
+        wheelRadius,
+        wheelRadius,
+        width,
+        16,
+        1,
+        false,
+        0,
+        Math.PI
+      ),
+      treadMaterial
+    );
+    backEnd.rotateZ(Math.PI / 2);
+    backEnd.rotateX(Math.PI / 2); // Curve faces backward
+    backEnd.position.set(0, 0, -length / 2 + wheelRadius);
+    group.add(backEnd);
+
+    return group;
+  };
+
+  const leftTread = createTrackEngine(treadWidth, treadHeight, treadLength);
   leftTread.position.set(-treadOffset, 0, 0);
-  leftTread.castShadow = true;
-  leftTread.receiveShadow = true;
   tank.add(leftTread);
 
-  const rightTread = new THREE.Mesh(treadGeo, treadMaterial);
+  const rightTread = createTrackEngine(treadWidth, treadHeight, treadLength);
   rightTread.position.set(treadOffset, 0, 0);
-  rightTread.castShadow = true;
-  rightTread.receiveShadow = true;
   tank.add(rightTread);
 
   // --- TURRET PIVOT ---
