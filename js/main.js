@@ -27,6 +27,10 @@ restartButton.addEventListener("click", restartGame);
 function initGame() {
   try {
     if (!THREE) throw new Error("Three.js not loaded");
+
+    const colorInput = document.getElementById("tank-color");
+    state.playerColor = colorInput.value;
+
     initUI();
     initControls();
     state.gameActive = true;

@@ -19,4 +19,5 @@ export const state = {
   explosions: [],
   minimapMarkers: [],
   cameraRotation: { phi: 0, theta: 0 },
+  playerColor: "#1e90ff",
 };

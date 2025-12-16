@@ -53,19 +53,46 @@ export function createTank(color, x, y, z) {
   return tank;
 }
 
+function findValidSpawnPosition(radius) {
+  let x,
+    z,
+    validPosition = false;
+  let attempts = 0;
+  while (!validPosition && attempts < 100) {
+    x = Math.random() * 40 - 20;
+    z = Math.random() * 40 - 20;
+
+    // Check map boundaries
+    if (Math.abs(x) > 23 || Math.abs(z) > 23) {
+      attempts++;
+      continue;
+    }
+
+    // Check wall collisions
+    validPosition = !state.walls.some((wall) => {
+      const box = new THREE.Box3().setFromObject(wall);
+      const entityPos = new THREE.Vector3(x, radius, z);
+      const entitySize = new THREE.Vector3(radius * 2, radius * 2, radius * 2);
+      const entityBox = new THREE.Box3().setFromCenterAndSize(
+        entityPos,
+        entitySize
+      );
+      return box.intersectsBox(entityBox);
+    });
+    attempts++;
+  }
+  return { x, z };
+}
+
 export function createPlayerTank() {
-  state.playerTank = createTank(0x1e90ff, 0, 0.5, 20);
+  const { x, z } = findValidSpawnPosition(1.5);
+  state.playerTank = createTank(state.playerColor, x, 0.5, z);
   state.scene.add(state.playerTank);
 }
 
 export function createEnemyTanks() {
-  const enemyPositions = [
-    [-20, 20],
-    [20, -20],
-    [0, -15],
-    [15, 10],
-  ];
-  enemyPositions.forEach(([x, z]) => {
+  for (let i = 0; i < 4; i++) {
+    const { x, z } = findValidSpawnPosition(1.5);
     const tank = createTank(0xff4500, x, 0.5, z);
     state.scene.add(tank);
     state.enemyTanks.push({
@@ -82,28 +109,14 @@ export function createEnemyTanks() {
         speed: 0.03 + Math.random() * 0.02,
       },
     });
-  });
+  }
 }
 
 export function createBoxes() {
   for (let i = 0; i < 10; i++) {
     const size = Math.random() * 1.5 + 0.5;
-    let x,
-      z,
-      validPosition = false;
-    while (!validPosition) {
-      x = Math.random() * 40 - 20;
-      z = Math.random() * 40 - 20;
-      if (Math.abs(x) < 5 && Math.abs(z - 20) < 5) continue;
-      validPosition = !state.walls.some((wall) => {
-        const box = new THREE.Box3().setFromObject(wall);
-        const boxPos = new THREE.Vector3(x, size / 2, z);
-        const boxSize = new THREE.Vector3(size, size, size);
-        return box.intersectsBox(
-          new THREE.Box3().setFromCenterAndSize(boxPos, boxSize)
-        );
-      });
-    }
+    const { x, z } = findValidSpawnPosition(size / 2);
+
     const boxGeometry = new THREE.BoxGeometry(size, size, size);
     const boxMaterial = new THREE.MeshStandardMaterial({
       color: Math.random() * 0xffffff,
