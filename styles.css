@@ -128,3 +128,21 @@ button:hover {
   color: #aaa;
   margin-bottom: 8px;
 }
+
+#reload-container {
+  width: 200px;
+  height: 20px;
+  background: rgba(0, 0, 0, 0.5);
+  border: 2px solid #555;
+  margin-top: 10px;
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+#reload-bar {
+  width: 100%;
+  height: 100%;
+  background: #00ff00;
+  width: 0%;
+  /* transition removed for instant feedback */
+}

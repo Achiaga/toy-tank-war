@@ -447,6 +447,17 @@ function animate() {
   if (state.playerTank.position.distanceTo(new THREE.Vector3(0, 0, 0)) < 5) {
     gameWin();
   }
+
+  // Update Reload Bar
+  const now = performance.now() / 1000;
+  const timeSinceShot = now - state.lastShotTime;
+  const reloadProgress = Math.min(timeSinceShot / state.stats.fireRate, 1);
+  const reloadBar = document.getElementById("reload-bar");
+  if (reloadBar) {
+    reloadBar.style.width = `${reloadProgress * 100}%`;
+    reloadBar.style.backgroundColor =
+      reloadProgress >= 1 ? "#00ff00" : "#ff4500";
+  }
 }
 
 window.addEventListener("blur", () => {

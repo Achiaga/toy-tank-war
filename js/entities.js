@@ -1,93 +1,179 @@
 import * as THREE from "https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.module.js";
 import { state } from "./gameState.js";
 
-export function createTank(color, x, y, z, scale = 1) {
+export function createTank(color, x, y, z, scale = 1, type = "balanced") {
   const tank = new THREE.Group();
 
-  // Body
+  // --- CHASSIS ---
+  let bodyGeo;
+  if (type === "heavy") {
+    // Heavy: Wider, bulkier
+    bodyGeo = new THREE.BoxGeometry(1.8 * scale, 1.0 * scale, 3.2 * scale);
+  } else if (type === "scout") {
+    // Scout: Sleeker
+    bodyGeo = new THREE.BoxGeometry(1.2 * scale, 0.6 * scale, 2.8 * scale);
+  } else {
+    // Balanced & Spanish
+    bodyGeo = new THREE.BoxGeometry(1.4 * scale, 0.8 * scale, 3 * scale);
+  }
+
   const body = new THREE.Mesh(
-    new THREE.BoxGeometry(1.4 * scale, 0.8 * scale, 3 * scale),
+    bodyGeo,
     new THREE.MeshStandardMaterial({ color })
   );
   body.castShadow = true;
   body.receiveShadow = true;
   tank.add(body);
 
-  // Treads
-  const treadGeometry = new THREE.BoxGeometry(
-    0.4 * scale,
-    0.8 * scale,
-    3.2 * scale
-  );
+  // --- TREADS ---
   const treadMaterial = new THREE.MeshStandardMaterial({ color: 0x333333 });
+  let treadWidth = 0.4 * scale;
+  let treadHeight = 0.8 * scale;
+  let treadLength = 3.2 * scale;
+  let treadOffset = 0.9 * scale;
 
-  const leftTread = new THREE.Mesh(treadGeometry, treadMaterial);
-  leftTread.position.set(-0.9 * scale, 0, 0);
+  if (type === "heavy") {
+    treadWidth = 0.6 * scale;
+    treadHeight = 1.0 * scale;
+    treadLength = 3.4 * scale;
+    treadOffset = 1.1 * scale;
+  } else if (type === "scout") {
+    // Wider wheels for scout
+    treadWidth = 0.6 * scale;
+    treadOffset = 0.8 * scale; // Slightly closer to body since body is narrower
+  }
+
+  const treadGeo = new THREE.BoxGeometry(treadWidth, treadHeight, treadLength);
+  const leftTread = new THREE.Mesh(treadGeo, treadMaterial);
+  leftTread.position.set(-treadOffset, 0, 0);
   leftTread.castShadow = true;
   leftTread.receiveShadow = true;
   tank.add(leftTread);
 
-  const rightTread = new THREE.Mesh(treadGeometry, treadMaterial);
-  rightTread.position.set(0.9 * scale, 0, 0);
+  const rightTread = new THREE.Mesh(treadGeo, treadMaterial);
+  rightTread.position.set(treadOffset, 0, 0);
   rightTread.castShadow = true;
   rightTread.receiveShadow = true;
   tank.add(rightTread);
 
-  // Turret Pivot
+  // --- TURRET PIVOT ---
   const turretPivot = new THREE.Group();
-  turretPivot.position.y = 0.5 * scale;
+  turretPivot.position.y = (type === "heavy" ? 0.6 : 0.5) * scale;
   tank.add(turretPivot);
 
-  // Turret
+  // --- TURRET ---
+  let turretGeo;
+  if (type === "heavy") {
+    turretGeo = new THREE.BoxGeometry(1.6 * scale, 0.8 * scale, 1.8 * scale);
+  } else if (type === "scout") {
+    turretGeo = new THREE.BoxGeometry(1.2 * scale, 0.5 * scale, 2 * scale);
+  } else {
+    turretGeo = new THREE.BoxGeometry(1.2 * scale, 0.6 * scale, 1.5 * scale);
+  }
+
   const turret = new THREE.Mesh(
-    new THREE.BoxGeometry(1.2 * scale, 0.6 * scale, 1.5 * scale),
+    turretGeo,
     new THREE.MeshStandardMaterial({ color })
   );
   turret.castShadow = true;
   turret.receiveShadow = true;
   turretPivot.add(turret);
 
-  // Cannon
-  const cannon = new THREE.Mesh(
-    new THREE.CylinderGeometry(0.15 * scale, 0.15 * scale, 2 * scale, 16),
-    new THREE.MeshStandardMaterial({ color: 0x333333 })
-  );
-  cannon.position.set(0, 0, 1.5 * scale);
-  cannon.rotation.x = Math.PI / 2;
-  cannon.castShadow = true;
-  cannon.receiveShadow = true;
-  turretPivot.add(cannon);
+  // --- CANNON ---
+  if (type === "spanish") {
+    // MUCHO CANNON
+    const cannon = new THREE.Mesh(
+      new THREE.CylinderGeometry(0.4 * scale, 0.4 * scale, 4 * scale, 16),
+      new THREE.MeshStandardMaterial({ color: 0x222222 })
+    );
+    cannon.position.set(0, 0, 2.5 * scale);
+    cannon.rotation.x = Math.PI / 2;
+    cannon.castShadow = true;
+    cannon.receiveShadow = true;
+    turretPivot.add(cannon);
 
-  // Hatch
+    // Flag? Maybe just a red/yellow band on the barrel
+    const band = new THREE.Mesh(
+      new THREE.CylinderGeometry(0.41 * scale, 0.41 * scale, 0.5 * scale, 16),
+      new THREE.MeshBasicMaterial({ color: 0xff0000 })
+    );
+    band.position.set(0, 0, 3.5 * scale);
+    band.rotation.x = Math.PI / 2;
+    turretPivot.add(band);
+  } else if (type === "heavy") {
+    // Double Barrel
+    const cannonGeo = new THREE.CylinderGeometry(
+      0.15 * scale,
+      0.15 * scale,
+      2.2 * scale,
+      16
+    );
+    const cannonMat = new THREE.MeshStandardMaterial({ color: 0x333333 });
+
+    const c1 = new THREE.Mesh(cannonGeo, cannonMat);
+    c1.position.set(-0.2 * scale, 0, 1.5 * scale);
+    c1.rotation.x = Math.PI / 2;
+    c1.castShadow = true;
+    turretPivot.add(c1);
+
+    const c2 = new THREE.Mesh(cannonGeo, cannonMat);
+    c2.position.set(0.2 * scale, 0, 1.5 * scale);
+    c2.rotation.x = Math.PI / 2;
+    c2.castShadow = true;
+    turretPivot.add(c2);
+  } else {
+    // Standard
+    const cannon = new THREE.Mesh(
+      new THREE.CylinderGeometry(0.15 * scale, 0.15 * scale, 2 * scale, 16),
+      new THREE.MeshStandardMaterial({ color: 0x333333 })
+    );
+    cannon.position.set(0, 0, 1.5 * scale);
+    cannon.rotation.x = Math.PI / 2;
+    cannon.castShadow = true;
+    cannon.receiveShadow = true;
+    turretPivot.add(cannon);
+  }
+
+  // --- HATCH ---
   const hatch = new THREE.Mesh(
     new THREE.CylinderGeometry(0.4 * scale, 0.4 * scale, 0.1 * scale, 16),
     new THREE.MeshStandardMaterial({ color: 0x222222 })
   );
-  hatch.position.set(0, 0.35 * scale, 0);
+  hatch.position.set(0, (type === "heavy" ? 0.45 : 0.35) * scale, 0);
   turretPivot.add(hatch);
 
-  // Eyes
+  // --- EYES ---
   const eyeGeometry = new THREE.SphereGeometry(0.2 * scale, 16, 16);
   const eyeMaterial = new THREE.MeshBasicMaterial({ color: 0xffffff });
   const pupilMaterial = new THREE.MeshBasicMaterial({ color: 0x000000 });
+
+  const eyeZ = (type === "heavy" ? 0.9 : 0.75) * scale;
+  const eyeY = 0.3 * scale;
+  const eyeX = 0.3 * scale;
+
   [-1, 1].forEach((i) => {
     const eye = new THREE.Mesh(eyeGeometry, eyeMaterial);
-    eye.position.set(i * 0.3 * scale, 0.3 * scale, 0.75 * scale); // Adjusted position for new turret
+    eye.position.set(i * eyeX, eyeY, eyeZ);
     turretPivot.add(eye);
     const pupil = new THREE.Mesh(
       new THREE.SphereGeometry(0.1 * scale, 16, 16),
       pupilMaterial
     );
-    pupil.position.set(i * 0.3 * scale, 0.3 * scale, 0.9 * scale);
+    pupil.position.set(i * eyeX, eyeY, eyeZ + 0.15 * scale);
     turretPivot.add(pupil);
   });
 
   tank.position.set(x, y, z);
   tank.userData.turretPivot = turretPivot;
+
   // Store dimensions for collision detection
+  // Adjust based on type if needed, but scale handles most of it
+  let width = 2.2 * scale;
+  if (type === "heavy") width = 2.8 * scale;
+
   tank.userData.size = {
-    width: 2.2 * scale, // Approx width including treads
-    length: 3.2 * scale, // Approx length
+    width: width,
+    length: 3.2 * scale,
     height: 1.5 * scale,
   };
   return tank;
@@ -148,36 +234,41 @@ export function createPlayerTank() {
     });
   }
 
-  state.playerTank = createTank(state.playerColor, x, 0.5, z, state.stats.size);
+  state.playerTank = createTank(
+    state.playerColor,
+    x,
+    0.5,
+    z,
+    state.stats.size,
+    state.selectedTankType
+  );
   state.scene.add(state.playerTank);
 }
 
 export function createEnemyTanks() {
-  for (let i = 0; i < 6; i++) {
-    // Increased enemy count
+  const totalEnemies = 12; // Increased from 6
+  const centerEnemies = 4; // Enemies guaranteed in the center
+
+  for (let i = 0; i < totalEnemies; i++) {
     let x,
       z,
       valid = false;
     let attempts = 0;
+    const isCenterSpawn = i < centerEnemies;
 
-    // Try to spawn near player first
     while (!valid && attempts < 50) {
-      const angle = Math.random() * Math.PI * 2;
-      const distance = 10 + Math.random() * 15; // 10 to 25 units away from player
-
-      if (state.playerTank) {
-        x = state.playerTank.position.x + Math.cos(angle) * distance;
-        z = state.playerTank.position.z + Math.sin(angle) * distance;
+      if (isCenterSpawn) {
+        // Spawn in center arena (radius < 20)
+        const angle = Math.random() * Math.PI * 2;
+        const radius = 5 + Math.random() * 15; // 5 to 20
+        x = Math.cos(angle) * radius;
+        z = Math.sin(angle) * radius;
       } else {
-        // Fallback if player not created yet (shouldn't happen if called order is correct)
-        x = Math.random() * 40 - 20;
-        z = Math.random() * 40 - 20;
-      }
-
-      // Keep within map boundaries (approx 48)
-      if (Math.abs(x) > 48 || Math.abs(z) > 48) {
-        attempts++;
-        continue;
+        // Spawn in outer maze
+        const angle = Math.random() * Math.PI * 2;
+        const distance = 25 + Math.random() * 20; // 25 to 45
+        x = Math.cos(angle) * distance;
+        z = Math.sin(angle) * distance;
       }
 
       // Check wall collisions
@@ -194,8 +285,9 @@ export function createEnemyTanks() {
       attempts++;
     }
 
-    if (!valid) continue; // Skip if no valid position found
+    if (!valid) continue;
 
+    // Randomize enemy type? For now just standard
     const tank = createTank(0xff4500, x, 0.5, z);
     state.scene.add(tank);
     state.enemyTanks.push({

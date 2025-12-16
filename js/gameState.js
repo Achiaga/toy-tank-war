@@ -63,5 +63,16 @@ export const state = {
       size: 0.8,
       color: "#006400",
     },
+    spanish: {
+      name: "Spanish",
+      maxHealth: 150,
+      armor: 20,
+      firePower: 100, // Mucho damage
+      fireRate: 2.0, // Slow reload
+      speed: 0.12,
+      rotationSpeed: 0.02,
+      size: 1.1,
+      color: "#FFC400", // Spanish yellow/gold
+    },
   },
 };

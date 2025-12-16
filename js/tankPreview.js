@@ -51,7 +51,7 @@ export function updatePreviewTank(type) {
   if (!config) return;
 
   // Create tank at origin with config scale
-  previewTank = createTank(config.color, 0, 0, 0, config.size);
+  previewTank = createTank(config.color, 0, 0, 0, config.size, type);
   previewScene.add(previewTank);
 }
 
