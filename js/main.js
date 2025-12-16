@@ -100,8 +100,8 @@ function animate() {
   );
 
   // TPS Camera Logic
-  const cameraDistance = 15;
-  const cameraHeight = 10;
+  const cameraDistance = 5;
+  const cameraHeight = 2;
 
   // Calculate camera position based on spherical coordinates
   const cx =

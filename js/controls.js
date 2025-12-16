@@ -36,13 +36,8 @@ export function initControls() {
   document.addEventListener("mousemove", (e) => {
     if (document.pointerLockElement === document.body && state.gameActive) {
       state.cameraRotation.theta -= e.movementX * 0.002;
-      state.cameraRotation.phi -= e.movementY * 0.002;
-
-      // Clamp vertical rotation
-      state.cameraRotation.phi = Math.max(
-        -Math.PI / 3,
-        Math.min(Math.PI / 6, state.cameraRotation.phi)
-      );
+      // Vertical rotation (phi) is locked
+      state.cameraRotation.phi = Math.PI / 11; // Fixed angle
     }
   });
 }
