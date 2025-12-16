@@ -18,4 +18,5 @@ export const state = {
   enemyProjectiles: [],
   explosions: [],
   minimapMarkers: [],
+  cameraRotation: { phi: 0, theta: 0 },
 };

@@ -10,7 +10,7 @@ import {
   createExplosion,
 } from "./entities.js";
 import { updateUI, gameOver, initUI } from "./ui.js";
-import { keys, handleKeyDown, handleKeyUp } from "./controls.js";
+import { keys, handleKeyDown, handleKeyUp, initControls } from "./controls.js";
 import {
   checkWallCollision,
   resolveWallCollision,
@@ -28,6 +28,7 @@ function initGame() {
   try {
     if (!THREE) throw new Error("Three.js not loaded");
     initUI();
+    initControls();
     state.gameActive = true;
     state.score = 0;
     state.health = 100;
@@ -98,12 +99,41 @@ function animate() {
     new THREE.Vector3(boundary, 0.5, boundary)
   );
 
-  state.camera.position.set(
-    state.playerTank.position.x,
-    10,
-    state.playerTank.position.z + 15
-  );
+  // TPS Camera Logic
+  const cameraDistance = 15;
+  const cameraHeight = 10;
+
+  // Calculate camera position based on spherical coordinates
+  const cx =
+    state.playerTank.position.x +
+    cameraDistance *
+      Math.sin(state.cameraRotation.theta) *
+      Math.cos(state.cameraRotation.phi);
+  const cy =
+    state.playerTank.position.y +
+    cameraHeight +
+    cameraDistance * Math.sin(state.cameraRotation.phi);
+  const cz =
+    state.playerTank.position.z +
+    cameraDistance *
+      Math.cos(state.cameraRotation.theta) *
+      Math.cos(state.cameraRotation.phi);
+
+  state.camera.position.set(cx, cy, cz);
   state.camera.lookAt(state.playerTank.position);
+
+  // Rotate turret to face camera direction
+  const turretPivot = state.playerTank.userData.turretPivot;
+  if (turretPivot) {
+    // Calculate the target rotation for the turret based on camera angle
+    // We want the turret to face away from the camera
+    const targetRotation = state.cameraRotation.theta + Math.PI;
+
+    // Convert to local rotation relative to tank body
+    const tankRotation = state.playerTank.rotation.y;
+    turretPivot.rotation.y = targetRotation - tankRotation;
+  }
+
   state.minimapCamera.position.set(
     state.playerTank.position.x,
     50,

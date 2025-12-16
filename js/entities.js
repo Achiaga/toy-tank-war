@@ -11,41 +11,45 @@ export function createTank(color, x, y, z) {
   body.receiveShadow = true;
   tank.add(body);
 
+  const turretPivot = new THREE.Group();
+  turretPivot.position.y = 0.5;
+  tank.add(turretPivot);
+
   const turret = new THREE.Mesh(
     new THREE.CylinderGeometry(0.8, 0.8, 0.5, 16),
     new THREE.MeshStandardMaterial({ color })
   );
-  turret.position.y = 0.5;
   turret.castShadow = true;
   turret.receiveShadow = true;
-  tank.add(turret);
+  turretPivot.add(turret);
 
   const cannon = new THREE.Mesh(
     new THREE.CylinderGeometry(0.2, 0.2, 1.5, 16),
     new THREE.MeshStandardMaterial({ color: 0x333333 })
   );
-  cannon.position.set(0, 0.5, 1.5);
+  cannon.position.set(0, 0, 1.5);
   cannon.rotation.x = Math.PI / 2;
   cannon.castShadow = true;
   cannon.receiveShadow = true;
-  tank.add(cannon);
+  turretPivot.add(cannon);
 
   const eyeGeometry = new THREE.SphereGeometry(0.2, 16, 16);
   const eyeMaterial = new THREE.MeshBasicMaterial({ color: 0xffffff });
   const pupilMaterial = new THREE.MeshBasicMaterial({ color: 0x000000 });
   [-1, 1].forEach((i) => {
     const eye = new THREE.Mesh(eyeGeometry, eyeMaterial);
-    eye.position.set(i * 0.5, 0.8, 0.8);
-    tank.add(eye);
+    eye.position.set(i * 0.5, 0.3, 0.8);
+    turretPivot.add(eye);
     const pupil = new THREE.Mesh(
       new THREE.SphereGeometry(0.1, 16, 16),
       pupilMaterial
     );
-    pupil.position.set(i * 0.55, 0.8, 0.9);
-    tank.add(pupil);
+    pupil.position.set(i * 0.55, 0.3, 0.9);
+    turretPivot.add(pupil);
   });
 
   tank.position.set(x, y, z);
+  tank.userData.turretPivot = turretPivot;
   return tank;
 }
 
@@ -142,12 +146,13 @@ export function createProjectile(isPlayer, position, direction) {
 
 export function firePlayerProjectile() {
   if (!state.gameActive) return;
+  const turretPivot = state.playerTank.userData.turretPivot;
   const direction = new THREE.Vector3(0, 0, 1).applyQuaternion(
-    state.playerTank.quaternion
+    turretPivot.getWorldQuaternion(new THREE.Quaternion())
   );
-  const position = new THREE.Vector3(0, 0.5, 1.5)
-    .applyQuaternion(state.playerTank.quaternion)
-    .add(state.playerTank.position);
+  const position = new THREE.Vector3(0, 0, 1.5)
+    .applyQuaternion(turretPivot.getWorldQuaternion(new THREE.Quaternion()))
+    .add(turretPivot.getWorldPosition(new THREE.Vector3()));
   createProjectile(true, position, direction);
 }
 
