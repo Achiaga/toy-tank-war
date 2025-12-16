@@ -8,8 +8,15 @@ import {
   createBoxes,
   createProjectile,
   createExplosion,
+  createSpottedIndicator,
 } from "./entities.js";
-import { updateUI, gameOver, gameWin, initUI } from "./ui.js";
+import {
+  updateUI,
+  gameOver,
+  gameWin,
+  initUI,
+  triggerDamageFlash,
+} from "./ui.js";
 import { keys, handleKeyDown, handleKeyUp, initControls } from "./controls.js";
 import {
   checkWallCollision,
@@ -64,6 +71,7 @@ function initGame() {
     const config = state.tankConfigs[state.selectedTankType || "balanced"];
     state.stats = { ...config }; // Copy config to stats
     state.health = state.stats.maxHealth;
+    state.cameraRotation.theta = Math.PI; // Start camera behind tank
 
     initUI();
     initControls();
@@ -185,6 +193,10 @@ function animate() {
       distance,
       state.walls
     );
+
+    if (enemy.indicator) {
+      enemy.indicator.visible = canSeePlayer && distance < 20;
+    }
 
     if (canSeePlayer && distance < 20) {
       enemy.mesh.lookAt(state.playerTank.position);
@@ -361,6 +373,7 @@ function animate() {
       const damage = 10 * (100 / (100 + state.stats.armor)); // Base 10 damage for now
       state.health -= damage;
       updateUI();
+      triggerDamageFlash();
       state.scene.remove(projectile.mesh);
       state.enemyProjectiles.splice(i, 1);
       createExplosion(projectile.mesh.position, 0x1e90ff, 1);

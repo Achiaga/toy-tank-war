@@ -163,6 +163,20 @@ export function createTank(color, x, y, z, scale = 1, type = "balanced") {
     turretPivot.add(pupil);
   });
 
+  // --- HEADLIGHTS ---
+  const headlightGeo = new THREE.SphereGeometry(0.1 * scale, 16, 16);
+  const headlightMat = new THREE.MeshBasicMaterial({ color: 0xffff00 });
+
+  const hlZ = 1.5 * scale; // Front of body (approx)
+  const hlY = 0.1 * scale; // Lowered
+  const hlX = 0.5 * scale;
+
+  [-1, 1].forEach((i) => {
+    const hl = new THREE.Mesh(headlightGeo, headlightMat);
+    hl.position.set(i * hlX, hlY, hlZ);
+    tank.add(hl);
+  });
+
   tank.position.set(x, y, z);
   tank.userData.turretPivot = turretPivot;
 
@@ -289,9 +303,16 @@ export function createEnemyTanks() {
 
     // Randomize enemy type? For now just standard
     const tank = createTank(0xff4500, x, 0.5, z);
+
+    // Add spotted indicator
+    const indicator = createSpottedIndicator();
+    indicator.position.set(0, 3, 0);
+    tank.add(indicator);
+
     state.scene.add(tank);
     state.enemyTanks.push({
       mesh: tank,
+      indicator: indicator,
       health: 100,
       maxHealth: 100,
       armor: 0,
@@ -401,4 +422,23 @@ export function createExplosion(position, color, size) {
   particles.position.copy(position);
   state.scene.add(particles);
   state.explosions.push({ particles, velocities, opacity: 1 });
+}
+
+export function createSpottedIndicator() {
+  const canvas = document.createElement("canvas");
+  canvas.width = 64;
+  canvas.height = 64;
+  const ctx = canvas.getContext("2d");
+  ctx.fillStyle = "red";
+  ctx.font = "bold 60px Arial";
+  ctx.textAlign = "center";
+  ctx.textBaseline = "middle";
+  ctx.fillText("!", 32, 32);
+
+  const texture = new THREE.CanvasTexture(canvas);
+  const material = new THREE.SpriteMaterial({ map: texture });
+  const sprite = new THREE.Sprite(material);
+  sprite.scale.set(2, 2, 1);
+  sprite.visible = false;
+  return sprite;
 }

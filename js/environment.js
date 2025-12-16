@@ -172,7 +172,7 @@ export function createBattleArena() {
   state.scene.add(platform);
 
   const objectivePillar = new THREE.Mesh(
-    new THREE.CylinderGeometry(0, 0, 12, 8),
+    new THREE.CylinderGeometry(3, 3, 12, 8),
     new THREE.MeshStandardMaterial({
       color: 0x00ffff,
       emissive: 0x00ffff,

@@ -45,9 +45,15 @@
       <button id="start-button">Start Game</button>
     </div>
 
+    <div id="top-hud">
+      <div id="health-container">
+        <div id="health-bar"></div>
+      </div>
+    </div>
+
     <div id="ui">
       <div>Score: <span id="score">0</span></div>
-      <div>Health: <span id="health">100</span></div>
+      <!-- Health moved to top-hud -->
       <div>Armor: <span id="armor">0</span></div>
       <div>Fire Rate: <span id="fire-rate">0.5</span>s</div>
       <div id="reload-container">
@@ -55,6 +61,7 @@
       </div>
     </div>
 
+    <div id="damage-overlay"></div>
     <div id="minimap"></div>
 
     <div id="game-over">
