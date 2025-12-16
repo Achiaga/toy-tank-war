@@ -26,6 +26,7 @@ import {
   raycastToTarget,
 } from "./utils.js";
 import { initPreview, updatePreviewTank, stopPreview } from "./tankPreview.js";
+import { audioManager } from "./audio.js";
 
 const startButton = document.getElementById("start-button");
 const restartButton = document.getElementById("restart-button");
@@ -79,6 +80,8 @@ function initGame() {
     state.score = 0;
     state.enemiesDefeated = 0;
 
+    audioManager.init();
+
     setupScene();
     createEnvironment();
     createBattleArena();
@@ -126,6 +129,10 @@ function animate() {
   if (keys.s) state.playerTank.translateZ(-speed);
   if (keys.a) state.playerTank.rotation.y += rotationSpeed;
   if (keys.d) state.playerTank.rotation.y -= rotationSpeed;
+
+  // Update engine sound
+  const currentSpeed = keys.w || keys.s ? speed : 0;
+  audioManager.updateEngine(currentSpeed);
 
   const collision = checkTankCollision(state.playerTank, state.walls);
   if (collision) {

@@ -1,5 +1,6 @@
 import * as THREE from "https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.module.js";
 import { state } from "./gameState.js";
+import { audioManager } from "./audio.js";
 
 export function createTank(color, x, y, z, scale = 1, type = "balanced") {
   const tank = new THREE.Group();
@@ -422,6 +423,8 @@ export function createExplosion(position, color, size) {
   particles.position.copy(position);
   state.scene.add(particles);
   state.explosions.push({ particles, velocities, opacity: 1 });
+
+  audioManager.playExplosion();
 }
 
 export function createSpottedIndicator() {

@@ -165,14 +165,14 @@ export function createBattleArena() {
 
   // === CENTRAL OBJECTIVE (open and glowing) ===
   const platform = new THREE.Mesh(
-    new THREE.CylinderGeometry(15, 15, 0.05, 32),
+    new THREE.CylinderGeometry(8, 8, 0.05, 32),
     new THREE.MeshStandardMaterial({ color: 0x888888 })
   );
   platform.position.y = 0.15;
   state.scene.add(platform);
 
   const objectivePillar = new THREE.Mesh(
-    new THREE.CylinderGeometry(3, 3, 12, 8),
+    new THREE.CylinderGeometry(2, 2, 12, 8),
     new THREE.MeshStandardMaterial({
       color: 0x00ffff,
       emissive: 0x00ffff,
