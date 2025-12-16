@@ -222,26 +222,28 @@ export function createBattleArena() {
     addToy(mesh);
   });
 
-  // C. Central Objective: The "Claw" Machine Base or Tower
-  const platform = new THREE.Mesh(
-    new THREE.CylinderGeometry(10, 10, 0.5, 32),
-    new THREE.MeshStandardMaterial({ color: 0x333333 })
-  );
-  platform.position.y = 0.25;
-  platform.receiveShadow = true;
-  state.scene.add(platform);
+  // C. Central Objective: Pink Platform with Ramps
+  const platformHeight = 0.1;
+  const platformRadius = 10;
 
-  const tower = new THREE.Mesh(
-    new THREE.CylinderGeometry(3, 4, 15, 8),
+  const platform = new THREE.Mesh(
+    new THREE.CylinderGeometry(
+      platformRadius,
+      platformRadius,
+      platformHeight,
+      32
+    ),
     new THREE.MeshStandardMaterial({
-      color: 0xff00ff,
-      emissive: 0xff00ff,
-      emissiveIntensity: 0.5,
-      roughness: 0.2,
+      color: 0xee4b2b,
+      emissive: 0xee4b2b,
+      emissiveIntensity: 0.3,
+      roughness: 0.4,
     })
   );
-  tower.position.y = 7.5;
-  addToy(tower);
+  platform.position.y = platformHeight / 2;
+  platform.castShadow = true;
+  platform.receiveShadow = true;
+  state.scene.add(platform);
 
   // D. Random Scattered Bricks
   for (let i = 0; i < 25; i++) {
