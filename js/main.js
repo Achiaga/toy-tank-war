@@ -8,7 +8,7 @@ import {
   createBoxes,
   createProjectile,
   createExplosion,
-  createSpottedIndicator,
+  firePlayerProjectile,
 } from "./entities.js";
 import {
   updateUI,
@@ -23,6 +23,8 @@ import {
   resolveWallCollision,
   checkTankCollision,
   resolveTankCollision,
+  checkTankTankCollision,
+  resolveTankTankCollision,
   raycastToTarget,
 } from "./utils.js";
 import { initPreview, updatePreviewTank, stopPreview } from "./tankPreview.js";
@@ -146,10 +148,23 @@ function animate() {
   const currentSpeed = keys.w || keys.s ? speed : 0;
   audioManager.updateEngine(currentSpeed);
 
+  if (keys.space) {
+    firePlayerProjectile();
+  }
+
   const collision = checkTankCollision(state.playerTank, state.walls);
   if (collision) {
     resolveTankCollision(state.playerTank, collision);
   }
+
+  // Check collision with enemies
+  state.enemyTanks.forEach((enemy) => {
+    if (enemy.health <= 0) return;
+    const tankCollision = checkTankTankCollision(state.playerTank, enemy.mesh);
+    if (tankCollision) {
+      resolveTankTankCollision(state.playerTank, enemy.mesh, tankCollision);
+    }
+  });
 
   const boundary = 48;
   state.playerTank.position.clamp(
@@ -488,7 +503,7 @@ function animate() {
   if (reloadBar) {
     reloadBar.style.width = `${reloadProgress * 100}%`;
     reloadBar.style.backgroundColor =
-      reloadProgress >= 1 ? "#00ff00" : "#ff4500";
+      reloadProgress >= 1 ? "#0080ffff" : "#ff4500";
   }
 }
 

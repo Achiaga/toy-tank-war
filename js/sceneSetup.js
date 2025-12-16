@@ -19,7 +19,8 @@ export function setupScene() {
   state.renderer.shadowMap.enabled = true;
   document.body.appendChild(state.renderer.domElement);
 
-  state.minimapCamera = new THREE.OrthographicCamera(-25, 25, 25, -25, 1, 1000);
+  // Map is roughly 100x100 (boundary is 48)
+  state.minimapCamera = new THREE.OrthographicCamera(-50, 50, 50, -50, 1, 1000);
   state.minimapCamera.position.set(0, 50, 0);
   state.minimapCamera.lookAt(0, 0, 0);
   state.minimapCamera.rotation.z = Math.PI;
@@ -29,7 +30,7 @@ export function setupScene() {
     antialias: true,
     alpha: true,
   });
-  state.minimapRenderer.setSize(150, 150);
+  state.minimapRenderer.setSize(200, 200);
   state.minimapRenderer.setClearColor(0x000000, 0);
   minimapElement.appendChild(state.minimapRenderer.domElement);
 

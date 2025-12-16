@@ -10,9 +10,8 @@ export function handleKeyDown(e) {
   if (key === "arrowdown") key = "s";
   if (key === "arrowright") key = "d";
   if (key in keys) keys[key] = true;
-  if (key === " " && !keys.space) {
+  if (key === " ") {
     keys.space = true;
-    firePlayerProjectile();
   }
 }
 

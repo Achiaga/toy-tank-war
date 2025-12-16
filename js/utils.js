@@ -150,3 +150,85 @@ export function resolveTankCollision(tank, collision) {
   tank.position.x += normal.x * overlap * 1.01; // 1.01 to ensure separation
   tank.position.z += normal.z * overlap * 1.01;
 }
+// SAT Collision for Tank vs Tank (both rotated)
+export function checkTankTankCollision(tank1, tank2) {
+  const getCorners = (tank) => {
+    const pos = tank.position;
+    const size = tank.userData.size || { width: 2.2, length: 3.2 };
+    const angle = tank.rotation.y;
+    const hw = size.width / 2;
+    const hl = size.length / 2;
+    return [
+      { x: hw, z: hl },
+      { x: -hw, z: hl },
+      { x: -hw, z: -hl },
+      { x: hw, z: -hl },
+    ].map((p) => {
+      const rx = p.x * Math.cos(angle) + p.z * Math.sin(angle);
+      const rz = -p.x * Math.sin(angle) + p.z * Math.cos(angle);
+      return { x: pos.x + rx, z: pos.z + rz };
+    });
+  };
+
+  const corners1 = getCorners(tank1);
+  const corners2 = getCorners(tank2);
+
+  const getAxes = (tank) => {
+    const angle = tank.rotation.y;
+    return [
+      { x: Math.cos(angle), z: -Math.sin(angle) },
+      { x: Math.sin(angle), z: Math.cos(angle) },
+    ];
+  };
+
+  const axes = [...getAxes(tank1), ...getAxes(tank2)];
+  let minOverlap = Infinity;
+  let collisionNormal = null;
+
+  for (const axis of axes) {
+    let min1 = Infinity,
+      max1 = -Infinity;
+    let min2 = Infinity,
+      max2 = -Infinity;
+
+    for (const p of corners1) {
+      const proj = p.x * axis.x + p.z * axis.z;
+      min1 = Math.min(min1, proj);
+      max1 = Math.max(max1, proj);
+    }
+
+    for (const p of corners2) {
+      const proj = p.x * axis.x + p.z * axis.z;
+      min2 = Math.min(min2, proj);
+      max2 = Math.max(max2, proj);
+    }
+
+    const overlap1 = max1 - min2;
+    const overlap2 = max2 - min1;
+
+    if (overlap1 < 0 || overlap2 < 0) return null;
+
+    const overlap = Math.min(overlap1, overlap2);
+    if (overlap < minOverlap) {
+      minOverlap = overlap;
+      collisionNormal = axis;
+      if (overlap1 < overlap2) {
+        collisionNormal = { x: -axis.x, z: -axis.z };
+      }
+    }
+  }
+
+  return { normal: collisionNormal, overlap: minOverlap };
+}
+
+export function resolveTankTankCollision(tank1, tank2, collision) {
+  const push = new THREE.Vector3(
+    collision.normal.x * collision.overlap * 0.5,
+    0,
+    collision.normal.z * collision.overlap * 0.5
+  );
+
+  // Push both tanks apart
+  tank1.position.add(push);
+  tank2.position.sub(push);
+}

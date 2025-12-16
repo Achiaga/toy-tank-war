@@ -20,44 +20,81 @@ export class AudioManager {
   }
 
   playShoot() {
+    console.log("playShoot called, ctx.state:", this.ctx?.state); // Check console
+
     if (!this.ctx || this.isMuted) return;
     if (this.ctx.state === "suspended") this.ctx.resume();
 
-    const t = this.ctx.currentTime + 0.01; // Small buffer to ensure scheduling is in future
+    const t = this.ctx.currentTime + 0.03; // Safer buffer
 
-    // Noise burst (Chirp)
+    // Noise burst (sharper attack)
+    const noiseBufferSize = this.ctx.sampleRate * 0.08;
+    const noiseBuffer = this.ctx.createBuffer(
+      1,
+      noiseBufferSize,
+      this.ctx.sampleRate
+    );
+    const noiseData = noiseBuffer.getChannelData(0);
+    for (let i = 0; i < noiseBufferSize; i++) {
+      noiseData[i] = (Math.random() * 2 - 1) * 0.8;
+    }
+    const noise = this.ctx.createBufferSource();
+    noise.buffer = noiseBuffer;
+
+    const noiseGain = this.ctx.createGain();
+    noiseGain.gain.setValueAtTime(0.4, t);
+    noiseGain.exponentialRampToValueAtTime(0.001, t + 0.08);
+    noiseGain.linearRampToValueAtTime(0, t + 0.1);
+
+    // Lowpass for "zap"
+    const noiseFilter = this.ctx.createBiquadFilter();
+    noiseFilter.type = "lowpass";
+    noiseFilter.frequency.setValueAtTime(1500, t);
+    noiseFilter.frequency.exponentialRampToValueAtTime(200, t + 0.08);
+
+    noise.connect(noiseFilter);
+    noiseFilter.connect(noiseGain);
+    noiseGain.connect(this.masterGain);
+    noise.start(t);
+
+    // Main pew tone (sawtooth + detune for laser vibe)
     const osc = this.ctx.createOscillator();
+    osc.type = "sawtooth";
+    osc.frequency.setValueAtTime(1200, t); // Higher, punchier start
+    osc.frequency.exponentialRampToValueAtTime(180, t + 0.25);
+    osc.detune.setValueAtTime(0, t);
+    osc.detune.linearRampToValueAtTime(-20, t + 0.25); // Slight pitch drop
+
     const gain = this.ctx.createGain();
+    gain.gain.setValueAtTime(0, t);
+    gain.gain.linearRampToValueAtTime(0.7, t + 0.02); // Fast attack
+    gain.gain.exponentialRampToValueAtTime(0.001, t + 0.25);
+    gain.linearRampToValueAtTime(0, t + 0.3); // Clean tail
 
-    osc.type = "square";
-    osc.frequency.setValueAtTime(200, t);
-    osc.frequency.exponentialRampToValueAtTime(50, t + 0.15);
+    // Filter sweep (key for "pew" feel)
+    const filter = this.ctx.createBiquadFilter();
+    filter.type = "lowpass";
+    filter.frequency.setValueAtTime(2000, t);
+    filter.frequency.exponentialRampToValueAtTime(300, t + 0.25);
+    filter.Q.setValueAtTime(1, t);
 
-    gain.gain.setValueAtTime(0.3, t);
-    gain.gain.exponentialRampToValueAtTime(0.001, t + 0.15);
-
-    osc.connect(gain);
+    osc.connect(filter);
+    filter.connect(gain);
     gain.connect(this.masterGain);
 
     osc.start(t);
-    osc.stop(t + 0.15);
+    osc.stop(t + 0.3);
 
-    // Main "Pew" Tone
-    const osc2 = this.ctx.createOscillator();
-    const gain2 = this.ctx.createGain();
-
-    osc2.type = "triangle"; // Smoother than sawtooth
-    osc2.frequency.setValueAtTime(600, t);
-    osc2.frequency.exponentialRampToValueAtTime(100, t + 0.2);
-
-    gain2.gain.setValueAtTime(0.5, t);
-    gain2.gain.exponentialRampToValueAtTime(0.001, t + 0.2);
-
-    osc2.connect(gain2);
-    gain2.connect(this.masterGain);
-
-    osc2.start(t);
-    osc2.stop(t + 0.2);
+    // Cleanup (prevents leaks on rapid fire)
+    setTimeout(() => {
+      osc.disconnect();
+      gain.disconnect();
+      filter.disconnect();
+      noise.disconnect();
+      noiseGain.disconnect();
+      noiseFilter.disconnect();
+    }, 350);
+    console.log("Pew scheduled at", t);
   }
 
   playExplosion() {
