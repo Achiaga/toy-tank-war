@@ -215,6 +215,33 @@ button:hover {
   animation: pulse 1s infinite alternate;
 }
 
+#countdown-timer {
+  position: absolute;
+  top: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 4rem;
+  font-weight: bold;
+  color: #ffff00;
+  text-shadow:
+    0 0 10px #ffff00,
+    0 0 20px #ffff00,
+    0 0 30px #ff8800,
+    2px 2px 4px rgba(0,0,0,0.8);
+  z-index: 100;
+  display: none;
+  animation: pulse-countdown 1s infinite;
+}
+
+#countdown-timer.active {
+  display: block;
+}
+
+@keyframes pulse-countdown {
+  0%, 100% { transform: translateX(-50%) scale(1); }
+  50% { transform: translateX(-50%) scale(1.1); }
+}
+
 @keyframes pulse {
   from { opacity: 0.6; }
   to { opacity: 1; }

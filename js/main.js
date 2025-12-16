@@ -490,9 +490,42 @@ function animate() {
   state.renderer.render(state.scene, state.camera);
   state.minimapRenderer.render(state.scene, state.minimapCamera);
 
-  // Check for center win condition
-  if (state.playerTank.position.distanceTo(new THREE.Vector3(0, 0, 0)) < 5) {
-    gameWin();
+  // Check for platform capture win condition
+  const distanceToCenter = state.playerTank.position.distanceTo(
+    new THREE.Vector3(0, 0, 0)
+  );
+  const onPlatform = distanceToCenter < 10; // Platform radius
+  const countdownElement = document.getElementById("countdown-timer");
+
+  if (onPlatform) {
+    // Player is on platform
+    if (state.platformCaptureTime === null) {
+      // Just entered platform
+      state.platformCaptureTime = performance.now() / 1000;
+    }
+
+    const timeOnPlatform = performance.now() / 1000 - state.platformCaptureTime;
+    const timeRemaining = Math.max(
+      0,
+      state.platformCaptureRequired - timeOnPlatform
+    );
+
+    // Show countdown
+    if (countdownElement) {
+      countdownElement.classList.add("active");
+      countdownElement.textContent = Math.ceil(timeRemaining);
+    }
+
+    // Check if capture complete
+    if (timeRemaining <= 0) {
+      gameWin();
+    }
+  } else {
+    // Player left platform, reset timer
+    state.platformCaptureTime = null;
+    if (countdownElement) {
+      countdownElement.classList.remove("active");
+    }
   }
 
   // Update Reload Bar

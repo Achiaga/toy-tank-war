@@ -6,6 +6,10 @@ A 3D tank battle game built with Three.js.
 
 ![Toy Tank War Live Action](assets/live_action.png)
 
+![Toy Tank War Live Action](assets/toystory1.png)
+
+![Toy Tank War Live Action](assets/toystory2.png)
+
 ## How to Run Locally
 
 Because this project uses JavaScript ES Modules (`import`/`export`), you cannot simply open `index.html` directly in your browser due to security restrictions (CORS). You must serve the files using a local web server.

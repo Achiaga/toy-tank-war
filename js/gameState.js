@@ -28,6 +28,8 @@ export const state = {
     fireRate: 0.5, // Seconds between shots
   },
   lastShotTime: 0,
+  platformCaptureTime: null, // When player entered platform
+  platformCaptureRequired: 10, // Seconds needed on platform to win
   selectedTankType: "balanced",
   tankConfigs: {
     heavy: {
