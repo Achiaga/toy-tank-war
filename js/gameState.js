@@ -77,4 +77,13 @@ export const state = {
       color: "#FFC400", // Spanish yellow/gold
     },
   },
+  debug: {
+    enabled: false, // Master debug toggle
+    immortal: false, // No damage taken
+    noTarget: false, // Enemies ignore player
+    flying: false, // Enable vertical movement
+    noclip: false, // Pass through walls
+    speedBoost: false, // 3x movement speed
+    infiniteAmmo: false, // No fire rate limit
+  },
 };

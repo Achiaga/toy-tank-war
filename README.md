@@ -4,6 +4,8 @@ A 3D tank battle game built with Three.js.
 
 ![Toy Tank War Initial Page](assets/initial_page.png)
 
+![Toy Tank War Live Action](assets/hold-pos.png)
+
 ![Toy Tank War Live Action](assets/live_action.png)
 
 ![Toy Tank War Live Action](assets/toystory1.png)

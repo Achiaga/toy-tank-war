@@ -1,9 +1,21 @@
 import { state } from "./gameState.js";
 import { firePlayerProjectile } from "./entities.js";
+import { handleDebugKeys } from "./debug.js";
 
-export const keys = { w: false, a: false, s: false, d: false, space: false };
+export const keys = {
+  w: false,
+  a: false,
+  s: false,
+  d: false,
+  space: false,
+  q: false,
+  e: false,
+};
 
 export function handleKeyDown(e) {
+  // Handle debug keys first
+  handleDebugKeys(e);
+
   let key = e.key.toLowerCase();
   if (key === "arrowup") key = "w";
   if (key === "arrowleft") key = "a";

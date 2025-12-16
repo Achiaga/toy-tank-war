@@ -489,7 +489,12 @@ export function firePlayerProjectile() {
   if (!state.gameActive) return;
 
   const now = performance.now() / 1000;
-  if (now - state.lastShotTime < state.stats.fireRate) return;
+  // Infinite ammo mode: skip fire rate check
+  if (
+    !state.debug.infiniteAmmo &&
+    now - state.lastShotTime < state.stats.fireRate
+  )
+    return;
   state.lastShotTime = now;
 
   const turretPivot = state.playerTank.userData.turretPivot;

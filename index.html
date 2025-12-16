@@ -67,6 +67,51 @@
     <div id="damage-overlay"></div>
     <div id="minimap"></div>
 
+    <!-- Debug Panel -->
+    <div id="debug-panel" style="display: none;">
+      <h3>🛠️ Debug Mode</h3>
+      <div class="debug-option">
+        <label>
+          <input type="checkbox" id="debug-immortal">
+          <span>Immortal (F2)</span>
+        </label>
+      </div>
+      <div class="debug-option">
+        <label>
+          <input type="checkbox" id="debug-notarget">
+          <span>No Target (F3)</span>
+        </label>
+      </div>
+      <div class="debug-option">
+        <label>
+          <input type="checkbox" id="debug-flying">
+          <span>Flying (F4) - Q/E</span>
+        </label>
+      </div>
+      <div class="debug-option">
+        <label>
+          <input type="checkbox" id="debug-noclip">
+          <span>Noclip (F5)</span>
+        </label>
+      </div>
+      <div class="debug-option">
+        <label>
+          <input type="checkbox" id="debug-speed">
+          <span>Speed x3 (F6)</span>
+        </label>
+      </div>
+      <div class="debug-option">
+        <label>
+          <input type="checkbox" id="debug-ammo">
+          <span>∞ Ammo (F7)</span>
+        </label>
+      </div>
+      <div class="debug-hint">Press F1 to toggle</div>
+    </div>
+
+    <!-- Active Debug Modes Indicator -->
+    <div id="debug-active-modes" style="display: none;"></div>
+
     <div id="game-over">
       <h2>Game Over</h2>
       <p>Final Score: <span id="final-score">0</span></p>

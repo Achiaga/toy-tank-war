@@ -246,3 +246,93 @@ button:hover {
   from { opacity: 0.6; }
   to { opacity: 1; }
 }
+
+/* Debug Panel Styles */
+#debug-panel {
+  position: absolute;
+  top: 20px;
+  right: 240px; /* Next to minimap */
+  background: rgba(0, 0, 0, 0.85);
+  border: 2px solid #00ff00;
+  border-radius: 10px;
+  padding: 15px;
+  min-width: 220px;
+  font-family: 'Courier New', monospace;
+  z-index: 100;
+  box-shadow: 0 0 20px rgba(0, 255, 0, 0.3);
+  transition: opacity 0.3s ease;
+}
+
+#debug-panel h3 {
+  margin: 0 0 15px 0;
+  color: #00ff00;
+  font-size: 1.2rem;
+  text-align: center;
+  text-shadow: 0 0 10px #00ff00;
+}
+
+.debug-option {
+  margin: 10px 0;
+}
+
+.debug-option label {
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+  color: #fff;
+  transition: color 0.2s;
+}
+
+.debug-option label:hover {
+  color: #00ff00;
+}
+
+.debug-option input[type="checkbox"] {
+  margin-right: 10px;
+  cursor: pointer;
+  width: 18px;
+  height: 18px;
+  accent-color: #00ff00;
+}
+
+.debug-option span {
+  font-size: 0.95rem;
+}
+
+.debug-hint {
+  margin-top: 15px;
+  padding-top: 10px;
+  border-top: 1px solid #333;
+  text-align: center;
+  color: #888;
+  font-size: 0.85rem;
+  font-style: italic;
+}
+
+/* Active Debug Modes Indicator */
+#debug-active-modes {
+  position: absolute;
+  bottom: 20px;
+  left: 20px;
+  background: rgba(0, 255, 0, 0.2);
+  border: 2px solid #00ff00;
+  border-radius: 8px;
+  padding: 10px 15px;
+  color: #00ff00;
+  font-family: 'Courier New', monospace;
+  font-size: 0.9rem;
+  font-weight: bold;
+  text-shadow: 0 0 5px #00ff00;
+  box-shadow: 0 0 15px rgba(0, 255, 0, 0.4);
+  z-index: 99;
+  animation: pulse-glow 2s infinite;
+}
+
+@keyframes pulse-glow {
+  0%, 100% {
+    box-shadow: 0 0 15px rgba(0, 255, 0, 0.4);
+  }
+  50% {
+    box-shadow: 0 0 25px rgba(0, 255, 0, 0.6);
+  }
+}

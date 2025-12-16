@@ -29,6 +29,7 @@ import {
 } from "./utils.js";
 import { initPreview, updatePreviewTank, stopPreview } from "./tankPreview.js";
 import { audioManager } from "./audio.js";
+import { initDebugPanel } from "./debug.js";
 
 const startButton = document.getElementById("start-button");
 const restartButton = document.getElementById("restart-button");
@@ -78,6 +79,7 @@ function initGame() {
 
     initUI();
     initControls();
+    initDebugPanel();
     state.gameActive = true;
     state.score = 0;
     state.enemiesDefeated = 0;
@@ -136,13 +138,29 @@ function animate() {
   requestAnimationFrame(animate);
 
   const prevPosition = state.playerTank.position.clone();
-  const speed = state.stats.speed;
+  // Apply speed boost if debug mode active
+  const speedMultiplier = state.debug.speedBoost ? 3 : 1;
+  const speed = state.stats.speed * speedMultiplier;
   const rotationSpeed = state.stats.rotationSpeed;
 
   if (keys.w) state.playerTank.translateZ(speed);
   if (keys.s) state.playerTank.translateZ(-speed);
   if (keys.a) state.playerTank.rotation.y += rotationSpeed;
   if (keys.d) state.playerTank.rotation.y -= rotationSpeed;
+
+  // Flying mode: vertical movement with Q/E
+  if (state.debug.flying) {
+    if (keys.q) state.playerTank.position.y += 0.2; // Move up
+    if (keys.e) state.playerTank.position.y -= 0.2; // Move down
+    // Clamp vertical position
+    state.playerTank.position.y = Math.max(
+      0.5,
+      Math.min(20, state.playerTank.position.y)
+    );
+  } else {
+    // Reset to ground level when flying disabled
+    state.playerTank.position.y = 0.5;
+  }
 
   // Update engine sound
   const currentSpeed = keys.w || keys.s ? speed : 0;
@@ -152,19 +170,25 @@ function animate() {
     firePlayerProjectile();
   }
 
-  const collision = checkTankCollision(state.playerTank, state.walls);
-  if (collision) {
-    resolveTankCollision(state.playerTank, collision);
-  }
-
-  // Check collision with enemies
-  state.enemyTanks.forEach((enemy) => {
-    if (enemy.health <= 0) return;
-    const tankCollision = checkTankTankCollision(state.playerTank, enemy.mesh);
-    if (tankCollision) {
-      resolveTankTankCollision(state.playerTank, enemy.mesh, tankCollision);
+  // Noclip mode: skip collision detection
+  if (!state.debug.noclip) {
+    const collision = checkTankCollision(state.playerTank, state.walls);
+    if (collision) {
+      resolveTankCollision(state.playerTank, collision);
     }
-  });
+
+    // Check collision with enemies
+    state.enemyTanks.forEach((enemy) => {
+      if (enemy.health <= 0) return;
+      const tankCollision = checkTankTankCollision(
+        state.playerTank,
+        enemy.mesh
+      );
+      if (tankCollision) {
+        resolveTankTankCollision(state.playerTank, enemy.mesh, tankCollision);
+      }
+    });
+  }
 
   const boundary = 48;
   state.playerTank.position.clamp(
@@ -221,18 +245,22 @@ function animate() {
       enemy.mesh.position
     );
     const distance = toPlayer.length();
-    const canSeePlayer = !raycastToTarget(
-      enemy.mesh.position,
-      toPlayer.clone().normalize(),
-      distance,
-      state.walls
-    );
+
+    // No Target mode: enemies ignore player
+    const canSeePlayer = state.debug.noTarget
+      ? false
+      : !raycastToTarget(
+          enemy.mesh.position,
+          toPlayer.clone().normalize(),
+          distance,
+          state.walls
+        );
 
     if (enemy.indicator) {
       enemy.indicator.visible = canSeePlayer && distance < 20;
     }
 
-    if (canSeePlayer && distance < 20) {
+    if (canSeePlayer && distance < 20 && !state.debug.noTarget) {
       enemy.mesh.lookAt(state.playerTank.position);
       if (distance > 8) {
         const direction = toPlayer.normalize();
@@ -401,17 +429,20 @@ function animate() {
     }
 
     if (projectile.mesh.position.distanceTo(state.playerTank.position) < 2) {
-      // Find the enemy who shot this? Simpler to just use a default or store it on projectile
-      // For now, let's assume standard enemy damage or store it on projectile creation
-      // Let's update createProjectile to store damage
-      const damage = 10 * (100 / (100 + state.stats.armor)); // Base 10 damage for now
-      state.health -= damage;
-      updateUI();
-      triggerDamageFlash();
+      // Immortality mode: skip damage
+      if (!state.debug.immortal) {
+        // Find the enemy who shot this? Simpler to just use a default or store it on projectile
+        // For now, let's assume standard enemy damage or store it on projectile creation
+        // Let's update createProjectile to store damage
+        const damage = 10 * (100 / (100 + state.stats.armor)); // Base 10 damage for now
+        state.health -= damage;
+        updateUI();
+        triggerDamageFlash();
+        if (state.health <= 0) gameOver();
+      }
       state.scene.remove(projectile.mesh);
       state.enemyProjectiles.splice(i, 1);
       createExplosion(projectile.mesh.position, 0x1e90ff, 1);
-      if (state.health <= 0) gameOver();
     }
   }
 
