@@ -1,12 +1,12 @@
 import * as THREE from "https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.module.js";
 import { state } from "./gameState.js";
 
-export function createTank(color, x, y, z) {
+export function createTank(color, x, y, z, scale = 1) {
   const tank = new THREE.Group();
 
   // Body
   const body = new THREE.Mesh(
-    new THREE.BoxGeometry(1.4, 0.8, 3),
+    new THREE.BoxGeometry(1.4 * scale, 0.8 * scale, 3 * scale),
     new THREE.MeshStandardMaterial({ color })
   );
   body.castShadow = true;
@@ -14,29 +14,33 @@ export function createTank(color, x, y, z) {
   tank.add(body);
 
   // Treads
-  const treadGeometry = new THREE.BoxGeometry(0.4, 0.8, 3.2);
+  const treadGeometry = new THREE.BoxGeometry(
+    0.4 * scale,
+    0.8 * scale,
+    3.2 * scale
+  );
   const treadMaterial = new THREE.MeshStandardMaterial({ color: 0x333333 });
 
   const leftTread = new THREE.Mesh(treadGeometry, treadMaterial);
-  leftTread.position.set(-0.9, 0, 0);
+  leftTread.position.set(-0.9 * scale, 0, 0);
   leftTread.castShadow = true;
   leftTread.receiveShadow = true;
   tank.add(leftTread);
 
   const rightTread = new THREE.Mesh(treadGeometry, treadMaterial);
-  rightTread.position.set(0.9, 0, 0);
+  rightTread.position.set(0.9 * scale, 0, 0);
   rightTread.castShadow = true;
   rightTread.receiveShadow = true;
   tank.add(rightTread);
 
   // Turret Pivot
   const turretPivot = new THREE.Group();
-  turretPivot.position.y = 0.5;
+  turretPivot.position.y = 0.5 * scale;
   tank.add(turretPivot);
 
   // Turret
   const turret = new THREE.Mesh(
-    new THREE.BoxGeometry(1.2, 0.6, 1.5),
+    new THREE.BoxGeometry(1.2 * scale, 0.6 * scale, 1.5 * scale),
     new THREE.MeshStandardMaterial({ color })
   );
   turret.castShadow = true;
@@ -45,10 +49,10 @@ export function createTank(color, x, y, z) {
 
   // Cannon
   const cannon = new THREE.Mesh(
-    new THREE.CylinderGeometry(0.15, 0.15, 2, 16),
+    new THREE.CylinderGeometry(0.15 * scale, 0.15 * scale, 2 * scale, 16),
     new THREE.MeshStandardMaterial({ color: 0x333333 })
   );
-  cannon.position.set(0, 0, 1.5);
+  cannon.position.set(0, 0, 1.5 * scale);
   cannon.rotation.x = Math.PI / 2;
   cannon.castShadow = true;
   cannon.receiveShadow = true;
@@ -56,30 +60,36 @@ export function createTank(color, x, y, z) {
 
   // Hatch
   const hatch = new THREE.Mesh(
-    new THREE.CylinderGeometry(0.4, 0.4, 0.1, 16),
+    new THREE.CylinderGeometry(0.4 * scale, 0.4 * scale, 0.1 * scale, 16),
     new THREE.MeshStandardMaterial({ color: 0x222222 })
   );
-  hatch.position.set(0, 0.35, 0);
+  hatch.position.set(0, 0.35 * scale, 0);
   turretPivot.add(hatch);
 
   // Eyes
-  const eyeGeometry = new THREE.SphereGeometry(0.2, 16, 16);
+  const eyeGeometry = new THREE.SphereGeometry(0.2 * scale, 16, 16);
   const eyeMaterial = new THREE.MeshBasicMaterial({ color: 0xffffff });
   const pupilMaterial = new THREE.MeshBasicMaterial({ color: 0x000000 });
   [-1, 1].forEach((i) => {
     const eye = new THREE.Mesh(eyeGeometry, eyeMaterial);
-    eye.position.set(i * 0.3, 0.3, 0.75); // Adjusted position for new turret
+    eye.position.set(i * 0.3 * scale, 0.3 * scale, 0.75 * scale); // Adjusted position for new turret
     turretPivot.add(eye);
     const pupil = new THREE.Mesh(
-      new THREE.SphereGeometry(0.1, 16, 16),
+      new THREE.SphereGeometry(0.1 * scale, 16, 16),
       pupilMaterial
     );
-    pupil.position.set(i * 0.3, 0.3, 0.9);
+    pupil.position.set(i * 0.3 * scale, 0.3 * scale, 0.9 * scale);
     turretPivot.add(pupil);
   });
 
   tank.position.set(x, y, z);
   tank.userData.turretPivot = turretPivot;
+  // Store dimensions for collision detection
+  tank.userData.size = {
+    width: 2.2 * scale, // Approx width including treads
+    length: 3.2 * scale, // Approx length
+    height: 1.5 * scale,
+  };
   return tank;
 }
 
@@ -138,7 +148,7 @@ export function createPlayerTank() {
     });
   }
 
-  state.playerTank = createTank(state.playerColor, x, 0.5, z);
+  state.playerTank = createTank(state.playerColor, x, 0.5, z, state.stats.size);
   state.scene.add(state.playerTank);
 }
 

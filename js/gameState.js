@@ -28,4 +28,40 @@ export const state = {
     fireRate: 0.5, // Seconds between shots
   },
   lastShotTime: 0,
+  selectedTankType: "balanced",
+  tankConfigs: {
+    heavy: {
+      name: "Heavy",
+      maxHealth: 200,
+      armor: 50,
+      firePower: 40,
+      fireRate: 1.0,
+      speed: 0.1,
+      rotationSpeed: 0.02,
+      size: 1.2, // Scale factor
+      color: "#8B0000",
+    },
+    balanced: {
+      name: "Balanced",
+      maxHealth: 100,
+      armor: 0,
+      firePower: 25,
+      fireRate: 0.5,
+      speed: 0.15,
+      rotationSpeed: 0.03,
+      size: 1.0,
+      color: "#1e90ff",
+    },
+    scout: {
+      name: "Scout",
+      maxHealth: 60,
+      armor: -10, // Takes more damage
+      firePower: 15,
+      fireRate: 0.25,
+      speed: 0.25,
+      rotationSpeed: 0.05,
+      size: 0.8,
+      color: "#006400",
+    },
+  },
 };

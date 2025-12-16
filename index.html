@@ -7,8 +7,31 @@
   <body>
     <div id="start-screen">
       <h1>Tank Labyrinth Battle</h1>
-      <p>WASD or Arrow keys to move, Space to shoot</p>
       <p>Navigate the labyrinth, destroy enemy tanks and boxes to score points!</p>
+      
+      <div id="tank-preview" style="width: 300px; height: 200px; margin-bottom: 20px; border: 1px solid #333; background: #222;"></div>
+
+      <div class="tank-selector">
+        <div class="tank-card" data-type="heavy">
+          <h3>Heavy Tank</h3>
+          <div class="stat-bar"><div class="fill" style="width: 100%"></div></div> <small>Health</small>
+          <div class="stat-bar"><div class="fill" style="width: 100%"></div></div> <small>Damage</small>
+          <div class="stat-bar"><div class="fill" style="width: 40%"></div></div> <small>Speed</small>
+        </div>
+        <div class="tank-card selected" data-type="balanced">
+          <h3>Balanced</h3>
+          <div class="stat-bar"><div class="fill" style="width: 70%"></div></div> <small>Health</small>
+          <div class="stat-bar"><div class="fill" style="width: 70%"></div></div> <small>Damage</small>
+          <div class="stat-bar"><div class="fill" style="width: 70%"></div></div> <small>Speed</small>
+        </div>
+        <div class="tank-card" data-type="scout">
+          <h3>Scout</h3>
+          <div class="stat-bar"><div class="fill" style="width: 40%"></div></div> <small>Health</small>
+          <div class="stat-bar"><div class="fill" style="width: 40%"></div></div> <small>Damage</small>
+          <div class="stat-bar"><div class="fill" style="width: 100%"></div></div> <small>Speed</small>
+        </div>
+      </div>
+
       <div style="margin-top: 20px;">
         <label for="tank-color">Choose Tank Color: </label>
         <input type="color" id="tank-color" value="#1e90ff">

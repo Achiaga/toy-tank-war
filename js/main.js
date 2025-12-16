@@ -14,14 +14,43 @@ import { keys, handleKeyDown, handleKeyUp, initControls } from "./controls.js";
 import {
   checkWallCollision,
   resolveWallCollision,
+  checkTankCollision,
+  resolveTankCollision,
   raycastToTarget,
 } from "./utils.js";
+import { initPreview, updatePreviewTank, stopPreview } from "./tankPreview.js";
 
 const startButton = document.getElementById("start-button");
 const restartButton = document.getElementById("restart-button");
 const minimapElement = document.getElementById("minimap");
+const tankCards = document.querySelectorAll(".tank-card");
 
-startButton.addEventListener("click", initGame);
+// Initialize preview on load
+window.addEventListener("load", () => {
+  document.getElementById("start-screen").style.display = "flex";
+  initPreview();
+});
+
+tankCards.forEach((card) => {
+  card.addEventListener("click", () => {
+    tankCards.forEach((c) => c.classList.remove("selected"));
+    card.classList.add("selected");
+    state.selectedTankType = card.dataset.type;
+
+    updatePreviewTank(state.selectedTankType);
+
+    // Optional: Update color picker to default for that tank type
+    const colorInput = document.getElementById("tank-color");
+    if (state.tankConfigs[state.selectedTankType]) {
+      colorInput.value = state.tankConfigs[state.selectedTankType].color;
+    }
+  });
+});
+
+startButton.addEventListener("click", () => {
+  stopPreview();
+  initGame();
+});
 restartButton.addEventListener("click", restartGame);
 
 function initGame() {
@@ -31,12 +60,16 @@ function initGame() {
     const colorInput = document.getElementById("tank-color");
     state.playerColor = colorInput.value;
 
+    // Load stats from selected tank type
+    const config = state.tankConfigs[state.selectedTankType || "balanced"];
+    state.stats = { ...config }; // Copy config to stats
+    state.health = state.stats.maxHealth;
+
     initUI();
     initControls();
     state.gameActive = true;
     state.score = 0;
     state.enemiesDefeated = 0;
-    state.health = 100;
 
     setupScene();
     createEnvironment();
@@ -78,25 +111,18 @@ function animate() {
   requestAnimationFrame(animate);
 
   const prevPosition = state.playerTank.position.clone();
-  const speed = 0.15;
-  const rotationSpeed = 0.03;
+  const speed = state.stats.speed;
+  const rotationSpeed = state.stats.rotationSpeed;
 
   if (keys.w) state.playerTank.translateZ(speed);
   if (keys.s) state.playerTank.translateZ(-speed);
   if (keys.a) state.playerTank.rotation.y += rotationSpeed;
   if (keys.d) state.playerTank.rotation.y -= rotationSpeed;
 
-  const hitWall = checkWallCollision(
-    state.playerTank.position,
-    1.5,
-    state.walls
-  );
-  if (hitWall)
-    resolveWallCollision(
-      state.playerTank.position,
-      new THREE.Vector3(),
-      hitWall
-    );
+  const collision = checkTankCollision(state.playerTank, state.walls);
+  if (collision) {
+    resolveTankCollision(state.playerTank, collision);
+  }
 
   const boundary = 48;
   state.playerTank.position.clamp(
@@ -439,7 +465,3 @@ window.addEventListener("focus", () => {
     animate();
   }
 });
-window.addEventListener(
-  "load",
-  () => (document.getElementById("start-screen").style.display = "flex")
-);

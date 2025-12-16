@@ -2,6 +2,7 @@ import * as THREE from "https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/thr
 import { state } from "./gameState.js";
 
 export function createEnvironment() {
+  // Small practice arena - keeping your fixed gated version (open and accessible)
   const groundGeometry = new THREE.PlaneGeometry(50, 50);
   const groundMaterial = new THREE.MeshStandardMaterial({ color: 0xf7b23b });
   state.ground = new THREE.Mesh(groundGeometry, groundMaterial);
@@ -12,8 +13,16 @@ export function createEnvironment() {
   const wallMaterial = new THREE.MeshStandardMaterial({ color: 0x8b4513 });
   const gateMaterial = new THREE.MeshStandardMaterial({ color: 0x333333 });
 
-  // === BOUNDARY WALLS WITH CENTERED GATES (unchanged - already split with ~20-unit gaps) ===
-  const boundaryWalls = [];
+  const boundaryWalls = [
+    { size: [15, 3, 1], pos: [-17.5, 1.5, -25] },
+    { size: [15, 3, 1], pos: [17.5, 1.5, -25] },
+    { size: [15, 3, 1], pos: [-17.5, 1.5, 25] },
+    { size: [15, 3, 1], pos: [17.5, 1.5, 25] },
+    { size: [1, 3, 15], pos: [25, 1.5, -17.5] },
+    { size: [1, 3, 15], pos: [25, 1.5, 17.5] },
+    { size: [1, 3, 15], pos: [-25, 1.5, -17.5] },
+    { size: [1, 3, 15], pos: [-25, 1.5, 17.5] },
+  ];
 
   boundaryWalls.forEach(({ size, pos }) => {
     const wall = new THREE.Mesh(new THREE.BoxGeometry(...size), wallMaterial);
@@ -24,58 +33,49 @@ export function createEnvironment() {
     state.walls.push(wall);
   });
 
-  // === GATE PILLARS - FIXED POSITIONS TO NOT BLOCK PATH ===
-  // Placed exactly at the inner edges of the wall segments (±10 on relevant axis)
   const gatePillars = [
-    // North gate pillars (at x = ±10, z = -25)
     { pos: [-10, 1.5, -25] },
     { pos: [10, 1.5, -25] },
-
-    // South gate
     { pos: [-10, 1.5, 25] },
     { pos: [10, 1.5, 25] },
-
-    // East gate pillars (at z = ±10, x = 25)
     { pos: [25, 1.5, -10] },
     { pos: [25, 1.5, 10] },
-
-    // West gate
     { pos: [-25, 1.5, -10] },
     { pos: [-25, 1.5, 10] },
   ];
 
   gatePillars.forEach(({ pos }) => {
-    const pillar = new THREE.Mesh(
-      new THREE.BoxGeometry(3, 6, 3), // 3 units wide, leaves plenty of clearance
-      gateMaterial
-    );
+    const pillar = new THREE.Mesh(new THREE.BoxGeometry(3, 6, 3), gateMaterial);
     pillar.position.set(...pos);
     pillar.castShadow = true;
     pillar.receiveShadow = true;
     state.scene.add(pillar);
-    state.walls.push(pillar); // Still collidable (tanks can drive between them)
+    state.walls.push(pillar);
   });
 }
 
 export function createBattleArena() {
-  // Expand Ground (large flat arena)
+  // Fresh large flat arena
   state.ground.geometry.dispose();
   state.ground.geometry = new THREE.PlaneGeometry(500, 500);
+  state.ground.material = new THREE.MeshStandardMaterial({ color: 0xaaaaaa }); // Neutral gray for battle feel
 
   const wallMaterial = new THREE.MeshStandardMaterial({ color: 0x555555 });
   const obstacleMaterial = new THREE.MeshStandardMaterial({ color: 0x8b4513 });
   const gateMaterial = new THREE.MeshStandardMaterial({ color: 0x333333 });
 
-  // === OUTER BOUNDARY WALLS WITH GATES (unchanged) ===
+  // === OUTER BOUNDARY WITH 4 WIDE GATES ===
   const outerWalls = [
-    { size: [30, 5, 2], pos: [-30, 2.5, -45] },
-    { size: [30, 5, 2], pos: [30, 2.5, -45] },
-    { size: [30, 5, 2], pos: [-30, 2.5, 45] },
-    { size: [30, 5, 2], pos: [30, 2.5, 45] },
-    { size: [2, 5, 30], pos: [45, 2.5, -30] },
-    { size: [2, 5, 30], pos: [45, 2.5, 30] },
-    { size: [2, 5, 30], pos: [-45, 2.5, -30] },
-    { size: [2, 5, 30], pos: [-45, 2.5, 30] },
+    // North & South segments
+    { size: [40, 6, 3], pos: [-35, 3, -50] },
+    { size: [40, 6, 3], pos: [35, 3, -50] },
+    { size: [40, 6, 3], pos: [-35, 3, 50] },
+    { size: [40, 6, 3], pos: [35, 3, 50] },
+    // East & West segments
+    { size: [3, 6, 40], pos: [50, 3, -35] },
+    { size: [3, 6, 40], pos: [50, 3, 35] },
+    { size: [3, 6, 40], pos: [-50, 3, -35] },
+    { size: [3, 6, 40], pos: [-50, 3, 35] },
   ];
 
   outerWalls.forEach(({ size, pos }) => {
@@ -87,20 +87,23 @@ export function createBattleArena() {
     state.walls.push(wall);
   });
 
-  // === OUTER GATE PILLARS (unchanged) ===
-  const outerGatePillars = [
-    { pos: [-15, 2.5, -45] },
-    { pos: [15, 2.5, -45] },
-    { pos: [-15, 2.5, 45] },
-    { pos: [15, 2.5, 45] },
-    { pos: [45, 2.5, -15] },
-    { pos: [45, 2.5, 15] },
-    { pos: [-45, 2.5, -15] },
-    { pos: [-45, 2.5, 15] },
+  // Gate pillars to mark entrances
+  const gatePillars = [
+    { pos: [-20, 3, -50] },
+    { pos: [20, 3, -50] },
+    { pos: [-20, 3, 50] },
+    { pos: [20, 3, 50] },
+    { pos: [50, 3, -20] },
+    { pos: [50, 3, 20] },
+    { pos: [-50, 3, -20] },
+    { pos: [-50, 3, 20] },
   ];
 
-  outerGatePillars.forEach(({ pos }) => {
-    const pillar = new THREE.Mesh(new THREE.BoxGeometry(4, 8, 4), gateMaterial);
+  gatePillars.forEach(({ pos }) => {
+    const pillar = new THREE.Mesh(
+      new THREE.BoxGeometry(5, 10, 5),
+      gateMaterial
+    );
     pillar.position.set(...pos);
     pillar.castShadow = true;
     pillar.receiveShadow = true;
@@ -108,19 +111,23 @@ export function createBattleArena() {
     state.walls.push(pillar);
   });
 
-  // === CORNER BUNKERS (unchanged) ===
-  const cornerBunkers = [
-    { size: [12, 4, 2], pos: [-34, 2, -34] },
-    { size: [2, 4, 12], pos: [-40, 2, -28] },
-    { size: [12, 4, 2], pos: [34, 2, -34] },
-    { size: [2, 4, 12], pos: [40, 2, -28] },
-    { size: [12, 4, 2], pos: [34, 2, 34] },
-    { size: [2, 4, 12], pos: [40, 2, 28] },
-    { size: [12, 4, 2], pos: [-34, 2, 34] },
-    { size: [2, 4, 12], pos: [-40, 2, 28] },
+  // === CORNER COVER BUNKERS (partial walls for protection) ===
+  const bunkers = [
+    // NW
+    { size: [15, 5, 3], pos: [-40, 2.5, -40] },
+    { size: [3, 5, 15], pos: [-40, 2.5, -40] },
+    // NE
+    { size: [15, 5, 3], pos: [40, 2.5, -40] },
+    { size: [3, 5, 15], pos: [40, 2.5, -40] },
+    // SE
+    { size: [15, 5, 3], pos: [40, 2.5, 40] },
+    { size: [3, 5, 15], pos: [40, 2.5, 40] },
+    // SW
+    { size: [15, 5, 3], pos: [-40, 2.5, 40] },
+    { size: [3, 5, 15], pos: [-40, 2.5, 40] },
   ];
 
-  cornerBunkers.forEach(({ size, pos }) => {
+  bunkers.forEach(({ size, pos }) => {
     const obj = new THREE.Mesh(
       new THREE.BoxGeometry(...size),
       obstacleMaterial
@@ -132,120 +139,66 @@ export function createBattleArena() {
     state.walls.push(obj);
   });
 
-  // === INNER RING WITH 4 GATES ===
-  // Split into segments with centered openings on N/S/E/W
-  const innerRingSegments = [
-    // North/South sides (horizontal segments, rotated)
-    { size: [4, 4, 12], pos: [-8, 2, -15], rotation: [0, Math.PI / 2, 0] },
-    { size: [4, 4, 12], pos: [8, 2, -15], rotation: [0, Math.PI / 2, 0] },
-    { size: [4, 4, 12], pos: [-8, 2, 15], rotation: [0, Math.PI / 2, 0] },
-    { size: [4, 4, 12], pos: [8, 2, 15], rotation: [0, Math.PI / 2, 0] },
-
-    // East/West sides (vertical segments)
-    { size: [12, 4, 4], pos: [-15, 2, -8] },
-    { size: [12, 4, 4], pos: [-15, 2, 8] },
-    { size: [12, 4, 4], pos: [15, 2, -8] },
-    { size: [12, 4, 4], pos: [15, 2, 8] },
+  // === SCATTERED MID OBSTACLES (easy to go around, good cover) ===
+  const midObstacles = [
+    { pos: [-20, 2, 0], size: 8 },
+    { pos: [20, 2, 0], size: 8 },
+    { pos: [0, 2, -20], size: 10 },
+    { pos: [0, 2, 20], size: 10 },
+    { pos: [-15, 2, -15], size: 6 },
+    { pos: [15, 2, 15], size: 6 },
+    { pos: [15, 2, -15], size: 6 },
+    { pos: [-15, 2, 15], size: 6 },
   ];
 
-  innerRingSegments.forEach(({ size, pos, rotation = [0, 0, 0] }) => {
-    const wall = new THREE.Mesh(
-      new THREE.BoxGeometry(...size),
+  midObstacles.forEach(({ pos, size }) => {
+    const obs = new THREE.Mesh(
+      new THREE.BoxGeometry(size, 4, size),
       obstacleMaterial
     );
-    wall.position.set(...pos);
-    wall.rotation.set(...rotation);
-    wall.castShadow = true;
-    wall.receiveShadow = true;
-    state.scene.add(wall);
-    state.walls.push(wall);
+    obs.position.set(...pos);
+    obs.castShadow = true;
+    obs.receiveShadow = true;
+    state.scene.add(obs);
+    state.walls.push(obs);
   });
 
-  // === INNER GATE PILLARS (mark the 4 entrances to center) ===
-  const innerGatePillars = [
-    // North gate to center
-    { pos: [-8, 2, -8] },
-    { pos: [8, 2, -8] },
-    // South
-    { pos: [-8, 2, 8] },
-    { pos: [8, 2, 8] },
-    // East
-    { pos: [8, 2, -8] },
-    { pos: [8, 2, 8] },
-    // West
-    { pos: [-8, 2, -8] },
-    { pos: [-8, 2, 8] },
-  ];
-
-  innerGatePillars.forEach(({ pos }) => {
-    const pillar = new THREE.Mesh(new THREE.BoxGeometry(3, 6, 3), gateMaterial);
-    pillar.position.set(...pos);
-    pillar.castShadow = true;
-    pillar.receiveShadow = true;
-    state.scene.add(pillar);
-    state.walls.push(pillar);
-  });
-
-  // === OUTER MAZE BARRIERS (unchanged, for additional paths/chokepoints) ===
-  const mazeBarriers = [
-    { size: [8, 4, 20], pos: [-20, 2, -10], rotation: [0, Math.PI / 4, 0] },
-    { size: [8, 4, 20], pos: [20, 2, 10], rotation: [0, Math.PI / 4, 0] },
-    { size: [8, 4, 20], pos: [20, 2, -10], rotation: [0, -Math.PI / 4, 0] },
-    { size: [8, 4, 20], pos: [-20, 2, 10], rotation: [0, -Math.PI / 4, 0] },
-    { size: [25, 4, 4], pos: [0, 2, -25] },
-    { size: [25, 4, 4], pos: [0, 2, 25] },
-    { size: [4, 4, 25], pos: [-25, 2, 0], rotation: [0, Math.PI / 2, 0] },
-    { size: [4, 4, 25], pos: [25, 2, 0], rotation: [0, Math.PI / 2, 0] },
-  ];
-
-  mazeBarriers.forEach(({ size, pos, rotation = [0, 0, 0] }) => {
-    const wall = new THREE.Mesh(
-      new THREE.BoxGeometry(...size),
-      obstacleMaterial
-    );
-    wall.position.set(...pos);
-    wall.rotation.set(...rotation);
-    wall.castShadow = true;
-    wall.receiveShadow = true;
-    state.scene.add(wall);
-    state.walls.push(wall);
-  });
-
-  // === CENTRAL OBJECTIVE: Flat on ground (unchanged) ===
-  const platformGeometry = new THREE.CylinderGeometry(12, 12, 0.2, 32);
-  const platformMaterial = new THREE.MeshStandardMaterial({ color: 0x888888 });
-  const platform = new THREE.Mesh(platformGeometry, platformMaterial);
-  platform.position.set(0, 0.1, 0);
-  platform.receiveShadow = true;
+  // === CENTRAL OBJECTIVE (open and glowing) ===
+  const platform = new THREE.Mesh(
+    new THREE.CylinderGeometry(15, 15, 0.05, 32),
+    new THREE.MeshStandardMaterial({ color: 0x888888 })
+  );
+  platform.position.y = 0.15;
   state.scene.add(platform);
 
-  const pillarGeometry = new THREE.CylinderGeometry(2, 2, 8, 16);
-  const pillarMaterial = new THREE.MeshStandardMaterial({
-    color: 0x00ffff,
-    emissive: 0x00ffff,
-    emissiveIntensity: 2,
-  });
-  const objectivePillar = new THREE.Mesh(pillarGeometry, pillarMaterial);
-  objectivePillar.position.set(0, 4, 0);
+  const objectivePillar = new THREE.Mesh(
+    new THREE.CylinderGeometry(3, 3, 12, 8),
+    new THREE.MeshStandardMaterial({
+      color: 0x00ffff,
+      emissive: 0x00ffff,
+      emissiveIntensity: 2,
+    })
+  );
+  objectivePillar.position.y = 6;
   objectivePillar.castShadow = true;
   state.scene.add(objectivePillar);
 
-  // === RANDOM OUTER OBSTACLES (unchanged) ===
-  for (let i = 0; i < 40; i++) {
+  // === RANDOM SMALLER OBSTACLES (variety, not blocking) ===
+  for (let i = 0; i < 30; i++) {
     const angle = Math.random() * Math.PI * 2;
-    const radius = 20 + Math.random() * 25;
+    const radius = 15 + Math.random() * 30;
     const x = Math.cos(angle) * radius;
     const z = Math.sin(angle) * radius;
-    const size = Math.random() * 4 + 2;
+    const size = 3 + Math.random() * 5;
 
-    const obstacle = new THREE.Mesh(
+    const obs = new THREE.Mesh(
       new THREE.BoxGeometry(size, size * 1.2, size),
       obstacleMaterial
     );
-    obstacle.position.set(x, size * 0.6, z);
-    obstacle.castShadow = true;
-    obstacle.receiveShadow = true;
-    state.scene.add(obstacle);
-    state.walls.push(obstacle);
+    obs.position.set(x, size * 0.6, z);
+    obs.castShadow = true;
+    obs.receiveShadow = true;
+    state.scene.add(obs);
+    state.walls.push(obs);
   }
 }
