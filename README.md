@@ -37,3 +37,16 @@ If you have Node.js installed:
 
 - **WASD** or **Arrow Keys**: Move the tank.
 - **Space**: Shoot.
+
+# TODO
+
+- Add sound effects and music.
+- Add indicator user has been spotted.
+- Add clear indicator when user is shot.
+- Add clear indicator when user is killed.
+- Add clear indicator of front and back of the tank.
+- Add clear indicator of left and right of the tank.
+- Add skills points where you can customize the tank and prioritize what you want, speed,
+  fire power, health, armor(hits takes less health), manuability, and of course the stetic of the tank, etc.
+- Multiplayer
+- Add chat

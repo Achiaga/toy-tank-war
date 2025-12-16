@@ -2,6 +2,7 @@ import * as THREE from "https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/thr
 
 export const state = {
   score: 0,
+  enemiesDefeated: 0,
   health: 100,
   gameActive: false,
   scene: null,

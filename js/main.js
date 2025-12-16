@@ -9,7 +9,7 @@ import {
   createProjectile,
   createExplosion,
 } from "./entities.js";
-import { updateUI, gameOver, initUI } from "./ui.js";
+import { updateUI, gameOver, gameWin, initUI } from "./ui.js";
 import { keys, handleKeyDown, handleKeyUp, initControls } from "./controls.js";
 import {
   checkWallCollision,
@@ -35,6 +35,7 @@ function initGame() {
     initControls();
     state.gameActive = true;
     state.score = 0;
+    state.enemiesDefeated = 0;
     state.health = 100;
 
     setupScene();
@@ -97,7 +98,7 @@ function animate() {
       hitWall
     );
 
-  const boundary = 29;
+  const boundary = 48;
   state.playerTank.position.clamp(
     new THREE.Vector3(-boundary, 0.5, -boundary),
     new THREE.Vector3(boundary, 0.5, boundary)
@@ -218,8 +219,8 @@ function animate() {
             0.5,
             enemy.mesh.position.z + (Math.random() * 10 - 5)
           ).clamp(
-            new THREE.Vector3(-23, 0.5, -23),
-            new THREE.Vector3(23, 0.5, 23)
+            new THREE.Vector3(-48, 0.5, -48),
+            new THREE.Vector3(48, 0.5, 48)
           );
         }
       } else {
@@ -228,8 +229,8 @@ function animate() {
           0.5,
           enemy.mesh.position.z + (Math.random() * 20 - 10)
         ).clamp(
-          new THREE.Vector3(-23, 0.5, -23),
-          new THREE.Vector3(23, 0.5, 23)
+          new THREE.Vector3(-48, 0.5, -48),
+          new THREE.Vector3(48, 0.5, 48)
         );
       }
     }
@@ -249,9 +250,9 @@ function animate() {
     }
 
     if (
-      projectile.lifeTime > 3 ||
-      Math.abs(projectile.mesh.position.x) > 25 ||
-      Math.abs(projectile.mesh.position.z) > 25
+      projectile.lifeTime > 5 ||
+      Math.abs(projectile.mesh.position.x) > 50 ||
+      Math.abs(projectile.mesh.position.z) > 50
     ) {
       state.scene.remove(projectile.mesh);
       state.playerProjectiles.splice(i, 1);
@@ -271,7 +272,12 @@ function animate() {
         if (enemy.health <= 0) {
           state.scene.remove(enemy.mesh);
           state.score += 100;
+          state.enemiesDefeated++;
           updateUI();
+
+          if (state.enemiesDefeated >= 10) {
+            gameWin();
+          }
         }
         return;
       }
@@ -313,9 +319,9 @@ function animate() {
     }
 
     if (
-      projectile.lifeTime > 3 ||
-      Math.abs(projectile.mesh.position.x) > 25 ||
-      Math.abs(projectile.mesh.position.z) > 25
+      projectile.lifeTime > 5 ||
+      Math.abs(projectile.mesh.position.x) > 50 ||
+      Math.abs(projectile.mesh.position.z) > 50
     ) {
       state.scene.remove(projectile.mesh);
       state.enemyProjectiles.splice(i, 1);
@@ -347,7 +353,7 @@ function animate() {
     );
     if (hitWall) resolveWallCollision(box.mesh.position, box.velocity, hitWall);
 
-    const boundary = 24.5 - box.size / 2;
+    const boundary = 48 - box.size / 2;
     if (box.mesh.position.x < -boundary) {
       box.mesh.position.x = -boundary;
       box.velocity.x *= -0.5;
@@ -410,6 +416,11 @@ function animate() {
   updateMinimap();
   state.renderer.render(state.scene, state.camera);
   state.minimapRenderer.render(state.scene, state.minimapCamera);
+
+  // Check for center win condition
+  if (state.playerTank.position.distanceTo(new THREE.Vector3(0, 0, 0)) < 5) {
+    gameWin();
+  }
 }
 
 window.addEventListener("blur", () => {

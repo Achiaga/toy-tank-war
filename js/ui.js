@@ -17,6 +17,14 @@ export function updateUI() {
 
 export function gameOver() {
   state.gameActive = false;
+  document.querySelector("#game-over h2").textContent = "Game Over";
+  finalScoreElement.textContent = state.score;
+  gameOverScreen.style.display = "flex";
+}
+
+export function gameWin() {
+  state.gameActive = false;
+  document.querySelector("#game-over h2").textContent = "You Win!";
   finalScoreElement.textContent = state.score;
   gameOverScreen.style.display = "flex";
 }

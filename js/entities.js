@@ -115,14 +115,77 @@ function findValidSpawnPosition(radius) {
 }
 
 export function createPlayerTank() {
-  const { x, z } = findValidSpawnPosition(1.5);
+  // Spawn in outer ring (between 32 and 42)
+  let x,
+    z,
+    valid = false;
+  while (!valid) {
+    const angle = Math.random() * Math.PI * 2;
+    const radius = 32 + Math.random() * 10; // 32 to 42
+    x = Math.cos(angle) * radius;
+    z = Math.sin(angle) * radius;
+
+    // Check wall collisions
+    valid = !state.walls.some((wall) => {
+      const box = new THREE.Box3().setFromObject(wall);
+      const entityPos = new THREE.Vector3(x, 1.5, z);
+      const entitySize = new THREE.Vector3(3, 3, 3); // Slightly larger check
+      const entityBox = new THREE.Box3().setFromCenterAndSize(
+        entityPos,
+        entitySize
+      );
+      return box.intersectsBox(entityBox);
+    });
+  }
+
   state.playerTank = createTank(state.playerColor, x, 0.5, z);
   state.scene.add(state.playerTank);
 }
 
 export function createEnemyTanks() {
-  for (let i = 0; i < 4; i++) {
-    const { x, z } = findValidSpawnPosition(1.5);
+  for (let i = 0; i < 6; i++) {
+    // Increased enemy count
+    let x,
+      z,
+      valid = false;
+    let attempts = 0;
+
+    // Try to spawn near player first
+    while (!valid && attempts < 50) {
+      const angle = Math.random() * Math.PI * 2;
+      const distance = 10 + Math.random() * 15; // 10 to 25 units away from player
+
+      if (state.playerTank) {
+        x = state.playerTank.position.x + Math.cos(angle) * distance;
+        z = state.playerTank.position.z + Math.sin(angle) * distance;
+      } else {
+        // Fallback if player not created yet (shouldn't happen if called order is correct)
+        x = Math.random() * 40 - 20;
+        z = Math.random() * 40 - 20;
+      }
+
+      // Keep within map boundaries (approx 48)
+      if (Math.abs(x) > 48 || Math.abs(z) > 48) {
+        attempts++;
+        continue;
+      }
+
+      // Check wall collisions
+      valid = !state.walls.some((wall) => {
+        const box = new THREE.Box3().setFromObject(wall);
+        const entityPos = new THREE.Vector3(x, 0.5, z);
+        const entitySize = new THREE.Vector3(3, 3, 3);
+        const entityBox = new THREE.Box3().setFromCenterAndSize(
+          entityPos,
+          entitySize
+        );
+        return box.intersectsBox(entityBox);
+      });
+      attempts++;
+    }
+
+    if (!valid) continue; // Skip if no valid position found
+
     const tank = createTank(0xff4500, x, 0.5, z);
     state.scene.add(tank);
     state.enemyTanks.push({
