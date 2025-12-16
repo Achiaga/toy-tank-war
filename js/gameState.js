@@ -20,4 +20,11 @@ export const state = {
   minimapMarkers: [],
   cameraRotation: { phi: 0, theta: 0 },
   playerColor: "#1e90ff",
+  stats: {
+    maxHealth: 100,
+    armor: 0,
+    firePower: 25,
+    fireRate: 0.5, // Seconds between shots
+  },
+  lastShotTime: 0,
 };

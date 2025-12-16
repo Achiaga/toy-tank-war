@@ -60,38 +60,47 @@ export function updateMinimap() {
   state.minimapMarkers.forEach((marker) => state.scene.remove(marker));
   state.minimapMarkers = [];
 
-  const markerGeometry = new THREE.CircleGeometry(0.5, 16);
+  // Player Marker (Triangle)
+  const playerGeometry = new THREE.CircleGeometry(0.8, 3);
   const playerMarker = new THREE.Mesh(
-    markerGeometry,
+    playerGeometry,
     new THREE.MeshBasicMaterial({ color: 0x0000ff })
   );
+  playerMarker.rotation.x = -Math.PI / 2;
+  playerMarker.rotation.z = state.playerTank.rotation.y; // Rotate with tank
   playerMarker.position.set(
     state.playerTank.position.x,
-    0.1,
+    20, // Higher up to be visible above walls
     state.playerTank.position.z
   );
   state.scene.add(playerMarker);
   state.minimapMarkers.push(playerMarker);
 
+  // Enemy Markers (Squares)
+  const enemyGeometry = new THREE.PlaneGeometry(1.2, 1.2);
   state.enemyTanks.forEach((enemy) => {
     if (enemy.health > 0) {
       const marker = new THREE.Mesh(
-        markerGeometry,
+        enemyGeometry,
         new THREE.MeshBasicMaterial({ color: 0xff0000 })
       );
-      marker.position.set(enemy.mesh.position.x, 0.1, enemy.mesh.position.z);
+      marker.rotation.x = -Math.PI / 2;
+      marker.position.set(enemy.mesh.position.x, 20, enemy.mesh.position.z);
       state.scene.add(marker);
       state.minimapMarkers.push(marker);
     }
   });
 
+  // Box Markers (Small Circles)
+  const boxGeometry = new THREE.CircleGeometry(0.4, 8);
   state.boxes.forEach((box) => {
     if (box.health > 0) {
       const marker = new THREE.Mesh(
-        markerGeometry,
+        boxGeometry,
         new THREE.MeshBasicMaterial({ color: 0x00ff00 })
       );
-      marker.position.set(box.mesh.position.x, 0.1, box.mesh.position.z);
+      marker.rotation.x = -Math.PI / 2;
+      marker.position.set(box.mesh.position.x, 20, box.mesh.position.z);
       state.scene.add(marker);
       state.minimapMarkers.push(marker);
     }

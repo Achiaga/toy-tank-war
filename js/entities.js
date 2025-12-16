@@ -3,28 +3,49 @@ import { state } from "./gameState.js";
 
 export function createTank(color, x, y, z) {
   const tank = new THREE.Group();
+
+  // Body
   const body = new THREE.Mesh(
-    new THREE.BoxGeometry(2, 0.8, 3),
+    new THREE.BoxGeometry(1.4, 0.8, 3),
     new THREE.MeshStandardMaterial({ color })
   );
   body.castShadow = true;
   body.receiveShadow = true;
   tank.add(body);
 
+  // Treads
+  const treadGeometry = new THREE.BoxGeometry(0.4, 0.8, 3.2);
+  const treadMaterial = new THREE.MeshStandardMaterial({ color: 0x333333 });
+
+  const leftTread = new THREE.Mesh(treadGeometry, treadMaterial);
+  leftTread.position.set(-0.9, 0, 0);
+  leftTread.castShadow = true;
+  leftTread.receiveShadow = true;
+  tank.add(leftTread);
+
+  const rightTread = new THREE.Mesh(treadGeometry, treadMaterial);
+  rightTread.position.set(0.9, 0, 0);
+  rightTread.castShadow = true;
+  rightTread.receiveShadow = true;
+  tank.add(rightTread);
+
+  // Turret Pivot
   const turretPivot = new THREE.Group();
   turretPivot.position.y = 0.5;
   tank.add(turretPivot);
 
+  // Turret
   const turret = new THREE.Mesh(
-    new THREE.CylinderGeometry(0.8, 0.8, 0.5, 16),
+    new THREE.BoxGeometry(1.2, 0.6, 1.5),
     new THREE.MeshStandardMaterial({ color })
   );
   turret.castShadow = true;
   turret.receiveShadow = true;
   turretPivot.add(turret);
 
+  // Cannon
   const cannon = new THREE.Mesh(
-    new THREE.CylinderGeometry(0.2, 0.2, 1.5, 16),
+    new THREE.CylinderGeometry(0.15, 0.15, 2, 16),
     new THREE.MeshStandardMaterial({ color: 0x333333 })
   );
   cannon.position.set(0, 0, 1.5);
@@ -33,18 +54,27 @@ export function createTank(color, x, y, z) {
   cannon.receiveShadow = true;
   turretPivot.add(cannon);
 
+  // Hatch
+  const hatch = new THREE.Mesh(
+    new THREE.CylinderGeometry(0.4, 0.4, 0.1, 16),
+    new THREE.MeshStandardMaterial({ color: 0x222222 })
+  );
+  hatch.position.set(0, 0.35, 0);
+  turretPivot.add(hatch);
+
+  // Eyes
   const eyeGeometry = new THREE.SphereGeometry(0.2, 16, 16);
   const eyeMaterial = new THREE.MeshBasicMaterial({ color: 0xffffff });
   const pupilMaterial = new THREE.MeshBasicMaterial({ color: 0x000000 });
   [-1, 1].forEach((i) => {
     const eye = new THREE.Mesh(eyeGeometry, eyeMaterial);
-    eye.position.set(i * 0.5, 0.3, 0.8);
+    eye.position.set(i * 0.3, 0.3, 0.75); // Adjusted position for new turret
     turretPivot.add(eye);
     const pupil = new THREE.Mesh(
       new THREE.SphereGeometry(0.1, 16, 16),
       pupilMaterial
     );
-    pupil.position.set(i * 0.55, 0.3, 0.9);
+    pupil.position.set(i * 0.3, 0.3, 0.9);
     turretPivot.add(pupil);
   });
 
@@ -59,11 +89,11 @@ function findValidSpawnPosition(radius) {
     validPosition = false;
   let attempts = 0;
   while (!validPosition && attempts < 100) {
-    x = Math.random() * 40 - 20;
-    z = Math.random() * 40 - 20;
+    x = Math.random() * 56 - 28; // -28 to 28
+    z = Math.random() * 56 - 28; // -28 to 28
 
     // Check map boundaries
-    if (Math.abs(x) > 23 || Math.abs(z) > 23) {
+    if (Math.abs(x) > 29 || Math.abs(z) > 29) {
       attempts++;
       continue;
     }
@@ -98,6 +128,10 @@ export function createEnemyTanks() {
     state.enemyTanks.push({
       mesh: tank,
       health: 100,
+      maxHealth: 100,
+      armor: 0,
+      firePower: 10,
+      fireRate: 2,
       timeSinceLastShot: 0,
       patrol: {
         current: new THREE.Vector3(x, 0.5, z),
@@ -159,6 +193,11 @@ export function createProjectile(isPlayer, position, direction) {
 
 export function firePlayerProjectile() {
   if (!state.gameActive) return;
+
+  const now = performance.now() / 1000;
+  if (now - state.lastShotTime < state.stats.fireRate) return;
+  state.lastShotTime = now;
+
   const turretPivot = state.playerTank.userData.turretPivot;
   const direction = new THREE.Vector3(0, 0, 1).applyQuaternion(
     turretPivot.getWorldQuaternion(new THREE.Quaternion())

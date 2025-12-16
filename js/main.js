@@ -1,7 +1,7 @@
 import * as THREE from "https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.module.js";
 import { state } from "./gameState.js";
 import { setupScene, updateMinimap } from "./sceneSetup.js";
-import { createEnvironment, createMaze } from "./environment.js";
+import { createEnvironment, createBattleArena } from "./environment.js";
 import {
   createPlayerTank,
   createEnemyTanks,
@@ -39,7 +39,7 @@ function initGame() {
 
     setupScene();
     createEnvironment();
-    createMaze();
+    createBattleArena();
     createPlayerTank();
     createEnemyTanks();
     createBoxes();
@@ -97,7 +97,7 @@ function animate() {
       hitWall
     );
 
-  const boundary = 24;
+  const boundary = 29;
   state.playerTank.position.clamp(
     new THREE.Vector3(-boundary, 0.5, -boundary),
     new THREE.Vector3(boundary, 0.5, boundary)
@@ -261,7 +261,10 @@ function animate() {
     state.enemyTanks.forEach((enemy, enemyIndex) => {
       if (enemy.health <= 0) return;
       if (projectile.mesh.position.distanceTo(enemy.mesh.position) < 2) {
-        enemy.health -= 25;
+        // Calculate damage with armor
+        const damage = state.stats.firePower * (100 / (100 + enemy.armor));
+        enemy.health -= damage;
+
         state.scene.remove(projectile.mesh);
         state.playerProjectiles.splice(i, 1);
         createExplosion(projectile.mesh.position, 0xff4500, 1);
@@ -320,7 +323,11 @@ function animate() {
     }
 
     if (projectile.mesh.position.distanceTo(state.playerTank.position) < 2) {
-      state.health -= 10;
+      // Find the enemy who shot this? Simpler to just use a default or store it on projectile
+      // For now, let's assume standard enemy damage or store it on projectile creation
+      // Let's update createProjectile to store damage
+      const damage = 10 * (100 / (100 + state.stats.armor)); // Base 10 damage for now
+      state.health -= damage;
       updateUI();
       state.scene.remove(projectile.mesh);
       state.enemyProjectiles.splice(i, 1);
