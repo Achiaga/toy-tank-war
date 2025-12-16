@@ -36,7 +36,7 @@ export function initControls() {
     if (document.pointerLockElement === document.body && state.gameActive) {
       state.cameraRotation.theta -= e.movementX * 0.002;
       // Vertical rotation (phi) is locked
-      state.cameraRotation.phi = Math.PI / 12; // Fixed angle
+      state.cameraRotation.phi = Math.PI / 10; // Fixed angle
     }
   });
 }

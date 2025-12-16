@@ -55,150 +55,216 @@ export function createEnvironment() {
 }
 
 export function createBattleArena() {
-  // Fresh large flat arena
+  const textureLoader = new THREE.TextureLoader();
+
+  // 1. Ground: Wooden Floor
+  const woodTexture = textureLoader.load("assets/wood_floor.png");
+  woodTexture.wrapS = THREE.RepeatWrapping;
+  woodTexture.wrapT = THREE.RepeatWrapping;
+  woodTexture.repeat.set(10, 10);
+
   state.ground.geometry.dispose();
   state.ground.geometry = new THREE.PlaneGeometry(500, 500);
-  state.ground.material = new THREE.MeshStandardMaterial({ color: 0xaaaaaa }); // Neutral gray for battle feel
+  state.ground.material = new THREE.MeshStandardMaterial({
+    map: woodTexture,
+    roughness: 0.8,
+    metalness: 0.1,
+  });
 
-  const wallMaterial = new THREE.MeshStandardMaterial({ color: 0x555555 });
-  const obstacleMaterial = new THREE.MeshStandardMaterial({ color: 0x8b4513 });
-  const gateMaterial = new THREE.MeshStandardMaterial({ color: 0x333333 });
+  // Toy Colors Palette
+  const toyColors = [
+    0xff0000, // Red
+    0x00ff00, // Green
+    0x0000ff, // Blue
+    0xffff00, // Yellow
+    0xffa500, // Orange
+    0x800080, // Purple
+  ];
 
-  // === OUTER BOUNDARY WITH 4 WIDE GATES ===
+  const getRandomToyMaterial = () => {
+    const color = toyColors[Math.floor(Math.random() * toyColors.length)];
+    return new THREE.MeshStandardMaterial({
+      color: color,
+      roughness: 0.2, // Shiny plastic
+      metalness: 0.1,
+    });
+  };
+
+  // 2. Boundary Walls: Cloud Wallpaper
+  const cloudTexture = textureLoader.load("assets/cloud_wallpaper.png");
+  cloudTexture.wrapS = THREE.RepeatWrapping;
+  cloudTexture.wrapT = THREE.RepeatWrapping;
+  cloudTexture.repeat.set(4, 1);
+
+  const roomWallMaterial = new THREE.MeshStandardMaterial({
+    map: cloudTexture,
+  });
+  const baseboardMaterial = new THREE.MeshStandardMaterial({ color: 0x8b4513 }); // Dark Wood
+
   const outerWalls = [
-    // North & South segments
-    { size: [40, 6, 3], pos: [-35, 3, -50] },
-    { size: [40, 6, 3], pos: [35, 3, -50] },
-    { size: [40, 6, 3], pos: [-35, 3, 50] },
-    { size: [40, 6, 3], pos: [35, 3, 50] },
-    // East & West segments
-    { size: [3, 6, 40], pos: [50, 3, -35] },
-    { size: [3, 6, 40], pos: [50, 3, 35] },
-    { size: [3, 6, 40], pos: [-50, 3, -35] },
-    { size: [3, 6, 40], pos: [-50, 3, 35] },
+    // North
+    { size: [100, 40, 2], pos: [0, 20, -50] },
+    // South
+    { size: [100, 40, 2], pos: [0, 20, 50] },
+    // East
+    { size: [2, 40, 100], pos: [50, 20, 0] },
+    // West
+    { size: [2, 40, 100], pos: [-50, 20, 0] },
   ];
 
   outerWalls.forEach(({ size, pos }) => {
-    const wall = new THREE.Mesh(new THREE.BoxGeometry(...size), wallMaterial);
-    wall.position.set(...pos);
-    wall.castShadow = true;
+    // Baseboard
+    const bbHeight = 4;
+    const bb = new THREE.Mesh(
+      new THREE.BoxGeometry(size[0], bbHeight, size[2]),
+      baseboardMaterial
+    );
+    bb.position.set(pos[0], bbHeight / 2, pos[2]);
+    bb.receiveShadow = true;
+    state.scene.add(bb);
+    state.walls.push(bb);
+
+    // Wall
+    const wall = new THREE.Mesh(
+      new THREE.BoxGeometry(size[0], size[1], size[2]),
+      roomWallMaterial
+    );
+    wall.position.set(pos[0], bbHeight + size[1] / 2, pos[2]);
     wall.receiveShadow = true;
     state.scene.add(wall);
     state.walls.push(wall);
   });
 
-  // Gate pillars to mark entrances
-  const gatePillars = [
-    { pos: [-20, 3, -50] },
-    { pos: [20, 3, -50] },
-    { pos: [-20, 3, 50] },
-    { pos: [20, 3, 50] },
-    { pos: [50, 3, -20] },
-    { pos: [50, 3, 20] },
-    { pos: [-50, 3, -20] },
-    { pos: [-50, 3, 20] },
+  // 3. Obstacles: Toys!
+
+  // Helper to add physics object
+  const addToy = (mesh) => {
+    mesh.castShadow = true;
+    mesh.receiveShadow = true;
+    state.scene.add(mesh);
+    state.walls.push(mesh);
+  };
+
+  // Helper to create a Lego-like brick
+  const createLegoBrick = (width, height, depth, x, y, z, material) => {
+    const brick = new THREE.Mesh(
+      new THREE.BoxGeometry(width, height, depth),
+      material
+    );
+    brick.position.set(x, y, z);
+    brick.castShadow = true;
+    brick.receiveShadow = true;
+
+    // Studs on top
+    const studGeo = new THREE.CylinderGeometry(0.6, 0.6, 0.4, 16);
+    const studCountX = Math.floor(width / 2);
+    const studCountZ = Math.floor(depth / 2);
+
+    for (let i = 0; i < studCountX; i++) {
+      for (let j = 0; j < studCountZ; j++) {
+        const stud = new THREE.Mesh(studGeo, material);
+        stud.position.set(
+          -width / 2 + 1 + i * 2,
+          height / 2 + 0.2,
+          -depth / 2 + 1 + j * 2
+        );
+        brick.add(stud);
+      }
+    }
+
+    state.scene.add(brick);
+    state.walls.push(brick);
+  };
+
+  // A. Building Block Forts (Lego Style)
+  const createBlockFort = (x, z) => {
+    createLegoBrick(4, 4, 8, x, 2, z, getRandomToyMaterial());
+    createLegoBrick(8, 4, 4, x, 6, z, getRandomToyMaterial());
+  };
+
+  createBlockFort(-35, -35);
+  createBlockFort(35, -35);
+  createBlockFort(35, 35);
+  createBlockFort(-35, 35);
+
+  // B. Scattered Toys (Mid Obstacles)
+  const midToys = [
+    { type: "box", pos: [-20, 2, 0], size: [6, 6, 6] }, // Giant Dice?
+    { type: "cylinder", pos: [20, 3, 0], size: [3, 3, 6] }, // Soda can
+    { type: "sphere", pos: [0, 3, -20], size: [4] }, // Ball
+    { type: "box", pos: [0, 2, 20], size: [8, 4, 2] }, // Domino
   ];
 
-  gatePillars.forEach(({ pos }) => {
-    const pillar = new THREE.Mesh(
-      new THREE.BoxGeometry(5, 10, 5),
-      gateMaterial
-    );
-    pillar.position.set(...pos);
-    pillar.castShadow = true;
-    pillar.receiveShadow = true;
-    state.scene.add(pillar);
-    state.walls.push(pillar);
+  midToys.forEach((toy) => {
+    let mesh;
+    const mat = getRandomToyMaterial();
+    if (toy.type === "box") {
+      // Make it a lego brick if it's a box
+      createLegoBrick(
+        toy.size[0],
+        toy.size[1],
+        toy.size[2],
+        toy.pos[0],
+        toy.pos[1],
+        toy.pos[2],
+        mat
+      );
+      return;
+    } else if (toy.type === "cylinder") {
+      mesh = new THREE.Mesh(
+        new THREE.CylinderGeometry(toy.size[0], toy.size[1], toy.size[2], 32),
+        mat
+      );
+    } else if (toy.type === "sphere") {
+      mesh = new THREE.Mesh(new THREE.SphereGeometry(toy.size[0], 32, 32), mat);
+    }
+    mesh.position.set(...toy.pos);
+    addToy(mesh);
   });
 
-  // === CORNER COVER BUNKERS (partial walls for protection) ===
-  const bunkers = [
-    // NW
-    { size: [15, 5, 3], pos: [-40, 2.5, -40] },
-    { size: [3, 5, 15], pos: [-40, 2.5, -40] },
-    // NE
-    { size: [15, 5, 3], pos: [40, 2.5, -40] },
-    { size: [3, 5, 15], pos: [40, 2.5, -40] },
-    // SE
-    { size: [15, 5, 3], pos: [40, 2.5, 40] },
-    { size: [3, 5, 15], pos: [40, 2.5, 40] },
-    // SW
-    { size: [15, 5, 3], pos: [-40, 2.5, 40] },
-    { size: [3, 5, 15], pos: [-40, 2.5, 40] },
-  ];
-
-  bunkers.forEach(({ size, pos }) => {
-    const obj = new THREE.Mesh(
-      new THREE.BoxGeometry(...size),
-      obstacleMaterial
-    );
-    obj.position.set(...pos);
-    obj.castShadow = true;
-    obj.receiveShadow = true;
-    state.scene.add(obj);
-    state.walls.push(obj);
-  });
-
-  // === SCATTERED MID OBSTACLES (easy to go around, good cover) ===
-  const midObstacles = [
-    { pos: [-20, 2, 0], size: 8 },
-    { pos: [20, 2, 0], size: 8 },
-    { pos: [0, 2, -20], size: 10 },
-    { pos: [0, 2, 20], size: 10 },
-    { pos: [-15, 2, -15], size: 6 },
-    { pos: [15, 2, 15], size: 6 },
-    { pos: [15, 2, -15], size: 6 },
-    { pos: [-15, 2, 15], size: 6 },
-  ];
-
-  midObstacles.forEach(({ pos, size }) => {
-    const obs = new THREE.Mesh(
-      new THREE.BoxGeometry(size, 4, size),
-      obstacleMaterial
-    );
-    obs.position.set(...pos);
-    obs.castShadow = true;
-    obs.receiveShadow = true;
-    state.scene.add(obs);
-    state.walls.push(obs);
-  });
-
-  // === CENTRAL OBJECTIVE (open and glowing) ===
+  // C. Central Objective: The "Claw" Machine Base or Tower
   const platform = new THREE.Mesh(
-    new THREE.CylinderGeometry(8, 8, 0.05, 32),
-    new THREE.MeshStandardMaterial({ color: 0x888888 })
+    new THREE.CylinderGeometry(10, 10, 0.5, 32),
+    new THREE.MeshStandardMaterial({ color: 0x333333 })
   );
-  platform.position.y = 0.15;
+  platform.position.y = 0.25;
+  platform.receiveShadow = true;
   state.scene.add(platform);
 
-  const objectivePillar = new THREE.Mesh(
-    new THREE.CylinderGeometry(2, 2, 12, 8),
+  const tower = new THREE.Mesh(
+    new THREE.CylinderGeometry(3, 4, 15, 8),
     new THREE.MeshStandardMaterial({
-      color: 0x00ffff,
-      emissive: 0x00ffff,
-      emissiveIntensity: 2,
+      color: 0xff00ff,
+      emissive: 0xff00ff,
+      emissiveIntensity: 0.5,
+      roughness: 0.2,
     })
   );
-  objectivePillar.position.y = 6;
-  objectivePillar.castShadow = true;
-  state.scene.add(objectivePillar);
+  tower.position.y = 7.5;
+  addToy(tower);
 
-  // === RANDOM SMALLER OBSTACLES (variety, not blocking) ===
-  for (let i = 0; i < 30; i++) {
+  // D. Random Scattered Bricks
+  for (let i = 0; i < 25; i++) {
     const angle = Math.random() * Math.PI * 2;
-    const radius = 15 + Math.random() * 30;
+    const radius = 15 + Math.random() * 25;
     const x = Math.cos(angle) * radius;
     const z = Math.sin(angle) * radius;
-    const size = 3 + Math.random() * 5;
 
-    const obs = new THREE.Mesh(
-      new THREE.BoxGeometry(size, size * 1.2, size),
-      obstacleMaterial
-    );
-    obs.position.set(x, size * 0.6, z);
-    obs.castShadow = true;
-    obs.receiveShadow = true;
-    state.scene.add(obs);
-    state.walls.push(obs);
+    const size = 2 + Math.floor(Math.random() * 3) * 2; // Even sizes for studs
+    const shapeType = Math.random();
+
+    if (shapeType < 0.6) {
+      // Lego Brick
+      createLegoBrick(size, 2, size, x, 1, z, getRandomToyMaterial());
+    } else {
+      // Cylinder
+      const mat = getRandomToyMaterial();
+      const mesh = new THREE.Mesh(
+        new THREE.CylinderGeometry(size / 2, size / 2, size, 16),
+        mat
+      );
+      mesh.position.set(x, size / 2, z);
+      addToy(mesh);
+    }
   }
 }
